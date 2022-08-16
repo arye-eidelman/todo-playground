@@ -1,6 +1,14 @@
 import './App.css'
 import { useLocalStore } from './hooks'
 
+function shortTitle(title: string) {
+  const length = 25
+  if (title.length <= length) {
+    return title
+  }
+  return title.slice(0, title.lastIndexOf(' ', length - 4)) + ' ...'
+}
+
 type Todo = {
   title: string,
   completed: boolean,
@@ -50,21 +58,21 @@ function App() {
               <li key={key} style={{ margin: "4px 0" }}>
                 <input
                   type="checkbox"
-                  name="comleted"
-                  id=""
+                  title={`Mark ${todo.completed ? 'un': ''}completed todo-item '${shortTitle(todo.title)}'`}
                   checked={todo.completed}
                   onChange={e => updateStore({ ...store, todos: { ...todos, [key]: { ...todo, completed: e.target.checked } } })}
                 />
                 <input
                   type="text"
-                  name="todo title"
-                  id={key + "-title"}
+                  title="Todo-item title"
                   value={todo.title}
                   onChange={e => {
                     updateStore({ ...store, todos: { ...todos, [key]: { ...todo, title: e.target.value } } })
                   }}
                 />
-                <button onClick={() => {
+                <button
+                title={`Trash todo-item '${shortTitle(todo.title)}'`}
+                onClick={() => {
                   const nextTodos = { ...todos }
                   delete nextTodos[key]
                   updateStore({ ...store, todos: nextTodos })
@@ -76,14 +84,10 @@ function App() {
           })}
 
           <li>
-            <input
-              type="checkbox"
-              disabled
-            />
+            <input type="checkbox" disabled />
             <input
               type="text"
-              name="todo title"
-              id="newTodo-title"
+              title="New todo-item title"
               placeholder='I need to _________'
               value={newTodo.title}
               onChange={e => {
