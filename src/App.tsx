@@ -13,6 +13,13 @@ type Todo = {
   sortKey: number
 }
 
+// fix react events target missing classname (at least as an optinal property)
+declare global {
+  interface EventTarget {
+    className?: string;
+  }
+}
+
 function shortTitle(title: string) {
   const length = 25
   if (title.length <= length) {
@@ -21,7 +28,7 @@ function shortTitle(title: string) {
   return title.slice(0, title.lastIndexOf(' ', length - 4)) + ' ...'
 }
 
-function todoTemplate(title = "", id = Date.now().toString()): Todo {
+function newTodoTemplate(title = "", id = Date.now().toString()): Todo {
   return {
     id,
     title,
@@ -34,7 +41,7 @@ function todoTemplate(title = "", id = Date.now().toString()): Todo {
 
 const TodoItemDropPlacehlder = () => {
   return (
-    <div className='my-1 space-x-2 flex items-baseline text-lg rounded-lg bg-gray-200 h-10'></div>
+    <div className='my-1 h-10 rounded-lg bg-gray-200'></div>
   )
 }
 
@@ -43,6 +50,7 @@ const ToDoItemRender = ({
   todo,
   updateTodo,
   deleteTodo,
+  inDragMode,
   dragId,
   isUnderDrag,
   setIsUnderDrag,
@@ -55,6 +63,7 @@ const ToDoItemRender = ({
   todo: Todo,
   updateTodo: (id: string, todo: Partial<Todo>) => void,
   deleteTodo: (id: string) => void,
+  inDragMode?: boolean,
   dragId?: string,
   isUnderDrag: boolean,
   setIsUnderDrag: (id?: string) => void
@@ -63,55 +72,54 @@ const ToDoItemRender = ({
   putDown: (id: string) => void,
   cancelDrag: () => void
 }) => {
-  // const [isUnderDrag, setIsUnderDrag] = useState(0)
+  const pointerEventClasses = (inDragMode && id !== dragId ? ' pointer-events-none' : '')
+  const thisIsBeingDragged = inDragMode && id === dragId
   return (
     <li
-      id={id}
-      draggable
-      onDragStart={(e) => pickUp(id)}
-      onDragEnd={(e) => cancelDrag()}
-      onDrop={(e) => {
-        e.preventDefault()
-        putDown(id)
-        setIsUnderDrag(undefined)
-      }}
-
-      onDragEnter={(e) => setIsUnderDrag(id)}
-      onDragLeave={(e) => {
-        // @ts-ignore
-        if (!e.target.className.includes('TodoItem')) {
+      id={'li_' + id ?? todo.id}
+      onDrop={e => { e.preventDefault(); putDown(id) }}
+      onDragEnter={e => { e.preventDefault(); setIsUnderDrag(id) }}
+      onDragOver={e => { e.preventDefault(); dragId === id || setIsUnderDrag(id) }}
+      onDragLeave={e => {
+        if (e.target.className?.split(' ').includes('TodoItem')) {
           setIsUnderDrag(undefined)
         }
       }}
-      onDragOver={(e) => setIsUnderDrag(id)}
     >
       {!previewAfter && isUnderDrag &&
         <TodoItemDropPlacehlder />
       }
 
       <div
-        className='TodoItem py-2 space-x-2 flex items-baseline text-lg'
+        id={'TodoItem_' + id ?? todo.id}
+        className={'TodoItem py-2 space-x-2 flex items-baseline text-lg' + pointerEventClasses + (thisIsBeingDragged ? ' rounded-lg bg-gray-300 opacity-50' : '')}
       >
         <input
           type="checkbox"
+          className={pointerEventClasses}
           title={`Mark ${todo.completed ? 'un' : ''}completed todo-item '${shortTitle(todo.title)}'`}
           checked={todo.completed}
           onChange={e => updateTodo(id, { completed: e.target.checked })}
         />
         <input
           type="text"
-          className='w-full text-sm py-1 px-2'
+          className={'w-full text-sm py-1 px-2' + pointerEventClasses}
           title="Todo-item title"
           value={todo.title}
           onChange={e => updateTodo(id, { title: e.target.value })}
         />
         <button
-          className='bg-white border-0 text-lg'
+          className={'bg-transparent border-0 text-lg' + pointerEventClasses}
           title={`Trash todo-item '${shortTitle(todo.title)}'`}
           onClick={() => deleteTodo(id)}>
           🗑
         </button>
-        <span className='text-lg'>⋮⋮⋮</span>
+        <span
+          className={'TodoItemDragHandle text-lg' + pointerEventClasses}
+          draggable
+          onDragStart={(e) => e.target.className?.split(' ').includes('TodoItemDragHandle') && pickUp(id)}
+          onDragEnd={() => cancelDrag()}
+        >⋮⋮⋮</span>
       </div>
 
       {previewAfter && isUnderDrag &&
@@ -131,14 +139,14 @@ function App() {
   }>({
     todos: {},
     sortedTodoIds: [],
-    newTodo: todoTemplate(),
+    newTodo: newTodoTemplate(),
   })
   const { todos, sortedTodoIds, newTodo } = store
   const [dragTodoId, setDragTodoId] = useState<string>()
   const [dragOverTodoId, setDragOverTodoId] = useState<string>()
-  const isDrag = typeof dragTodoId === "string"
+  const inDragMode = typeof dragTodoId === "string"
 
-  const indexOfDragTodo = isDrag ? sortedTodoIds.indexOf(dragTodoId) : -1
+  const indexOfDragTodo = inDragMode ? sortedTodoIds.indexOf(dragTodoId) : -1
 
   return (
     <div className="mx-auto max-w-xl">
@@ -168,12 +176,13 @@ function App() {
                     updateStore({ ...store, todos: nextTodos, sortedTodoIds: sortedTodoIds.filter(sId => sId !== id) })
                   }}
                   dragId={dragTodoId}
-                  isUnderDrag={dragOverTodoId === id}
+                  inDragMode={inDragMode}
+                  isUnderDrag={!!(dragTodoId && dragTodoId !== id && dragOverTodoId === id)}
                   setIsUnderDrag={(id) => setDragOverTodoId(id)}
                   previewAfter={indexOfDragTodo < index}
                   pickUp={(id) => setDragTodoId(id)}
                   putDown={(id) => {
-                    if (isDrag) {
+                    if (inDragMode) {
                       const placeBeforeDropTodo = todos[dragTodoId].sortKey > todo.sortKey
                       const nextSortKey = placeBeforeDropTodo
                         ? index <= 0
@@ -198,9 +207,10 @@ function App() {
                         sortedTodoIds: nextSortedTodo
                       })
                       setDragTodoId(undefined)
+                      setDragOverTodoId(undefined)
                     }
                   }}
-                  cancelDrag={() => setDragTodoId(undefined)}
+                  cancelDrag={() => { setDragTodoId(undefined); setDragOverTodoId(undefined) }}
                 />
               )
             })}
@@ -220,7 +230,7 @@ function App() {
                 if (e.key === "Enter") {
                   updateStore({
                     ...store,
-                    newTodo: todoTemplate(),
+                    newTodo: newTodoTemplate(),
                     sortedTodoIds: [...sortedTodoIds, newTodo.id],
                     todos: { ...todos, [newTodo.id]: newTodo },
                   })
