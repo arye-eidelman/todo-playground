@@ -20,6 +20,10 @@ declare global {
   }
 }
 
+function uniqueId() {
+  return Date.now().toString()
+}
+
 function shortTitle(title: string) {
   const length = 25
   if (title.length <= length) {
@@ -28,7 +32,7 @@ function shortTitle(title: string) {
   return title.slice(0, title.lastIndexOf(' ', length - 4)) + ' ...'
 }
 
-function newTodoTemplate(title = "", id = Date.now().toString()): Todo {
+function newTodoTemplate(title = "", id = uniqueId()): Todo {
   return {
     id,
     title,
@@ -39,9 +43,28 @@ function newTodoTemplate(title = "", id = Date.now().toString()): Todo {
   }
 }
 
-const TodoItemDropPlacehlder = () => {
+const DropPlaceholder = ({
+  index,
+  hidden,
+  isUnderDrag,
+  setIsUnderDrag,
+  putDown,
+}: {
+  index: number,
+  hidden: boolean,
+  isUnderDrag: boolean,
+  setIsUnderDrag: (index?: number) => void
+  putDown: (index: number) => void,
+}) => {
   return (
-    <div className='my-1 h-10 rounded-lg bg-gray-200'></div>
+    <div
+      hidden={hidden}
+      className={'-my-5 z-100 relative h-10 rounded-lg' + (isUnderDrag ? ' bg-gray-200/90' : '')}
+      onDrop={e => { e.preventDefault(); putDown(index) }}
+      onDragEnter={e => { e.preventDefault(); setIsUnderDrag(index) }}
+      onDragOver={e => { e.preventDefault(); setIsUnderDrag(index) }}
+      onDragLeave={e => { e.preventDefault(); setIsUnderDrag(undefined) }}
+    ></div>
   )
 }
 
@@ -52,11 +75,7 @@ const ToDoItemRender = ({
   deleteTodo,
   inDragMode,
   dragId,
-  isUnderDrag,
-  setIsUnderDrag,
-  previewAfter,
   pickUp,
-  putDown,
   cancelDrag
 }: {
   id: string,
@@ -65,34 +84,18 @@ const ToDoItemRender = ({
   deleteTodo: (id: string) => void,
   inDragMode?: boolean,
   dragId?: string,
-  isUnderDrag: boolean,
-  setIsUnderDrag: (id?: string) => void
-  previewAfter?: boolean,
   pickUp: (id: string) => void,
-  putDown: (id: string) => void,
   cancelDrag: () => void
 }) => {
-  const pointerEventClasses = (inDragMode && id !== dragId ? ' pointer-events-none' : '')
+  const pointerEventClasses = '' //(inDragMode && id !== dragId ? ' pointer-events-none' : '')
   const thisIsBeingDragged = inDragMode && id === dragId
   return (
     <li
       id={'li_' + id ?? todo.id}
-      onDrop={e => { e.preventDefault(); putDown(id) }}
-      onDragEnter={e => { e.preventDefault(); setIsUnderDrag(id) }}
-      onDragOver={e => { e.preventDefault(); dragId === id || setIsUnderDrag(id) }}
-      onDragLeave={e => {
-        if (e.target.className?.split(' ').includes('TodoItem')) {
-          setIsUnderDrag(undefined)
-        }
-      }}
     >
-      {!previewAfter && isUnderDrag &&
-        <TodoItemDropPlacehlder />
-      }
-
       <div
         id={'TodoItem_' + id ?? todo.id}
-        className={'TodoItem py-2 space-x-2 flex items-baseline text-lg' + pointerEventClasses + (thisIsBeingDragged ? ' rounded-lg bg-gray-300 opacity-50' : '')}
+        className={'TodoItem py-2 space-x-2 flex items-baseline text-lg rounded-lg' + pointerEventClasses + (thisIsBeingDragged ? ' opacity-25' : '')}
       >
         <input
           type="checkbox"
@@ -117,16 +120,10 @@ const ToDoItemRender = ({
         <span
           className={'TodoItemDragHandle text-lg' + pointerEventClasses}
           draggable
-          onDragStart={(e) => e.target.className?.split(' ').includes('TodoItemDragHandle') && pickUp(id)}
+          onDragStart={(e) => pickUp(id)}
           onDragEnd={() => cancelDrag()}
         >⋮⋮⋮</span>
       </div>
-
-      {previewAfter && isUnderDrag &&
-        <TodoItemDropPlacehlder />
-      }
-
-      {/* <TodoItemDropPlacehlder /> */}
     </li>
   )
 }
@@ -143,11 +140,54 @@ function App() {
   })
   const { todos, sortedTodoIds, newTodo } = store
   const [dragTodoId, setDragTodoId] = useState<string>()
-  const [dragOverTodoId, setDragOverTodoId] = useState<string>()
+  const [dragOverTodoIndex, setDragOverTodoIndex] = useState<number>()
   const inDragMode = typeof dragTodoId === "string"
 
-  const indexOfDragTodo = inDragMode ? sortedTodoIds.indexOf(dragTodoId) : -1
+  const setIsUnderDrag = (index?: number) => setDragOverTodoIndex(index)
+  const putDown = (downIndex: number) => {
+    if (inDragMode) {
+      let nextSortKey
+      if (downIndex === 0) {
+        nextSortKey = todos[sortedTodoIds[downIndex]].sortKey - 1
+      } else if (downIndex === sortedTodoIds.length) {
+        nextSortKey = todos[sortedTodoIds[downIndex - 1]].sortKey + 1
+      } else {
+        nextSortKey = (todos[sortedTodoIds[downIndex]].sortKey + todos[sortedTodoIds[downIndex - 1]].sortKey) / 2
+      }
 
+      const nextSortedTodo = [...sortedTodoIds]
+
+      const upIndex = sortedTodoIds.indexOf(dragTodoId)
+      if (downIndex < upIndex) {
+        nextSortedTodo.splice(upIndex, 1)
+        nextSortedTodo.splice(downIndex, 0, dragTodoId)
+      } else {
+        nextSortedTodo.splice(downIndex, 0, dragTodoId)
+        nextSortedTodo.splice(upIndex, 1)
+      }
+      updateStore({
+        ...store,
+        todos: {
+          ...todos,
+          [dragTodoId]: {
+            ...todos[dragTodoId],
+            sortKey: nextSortKey
+          }
+        },
+        sortedTodoIds: nextSortedTodo
+      })
+      setDragTodoId(undefined)
+      setDragOverTodoIndex(undefined)
+    }
+  }
+  const updateTodo = (id: string, nextTodo: Partial<Todo>) => {
+    updateStore({ ...store, todos: { ...todos, [id]: { ...todos[id], ...nextTodo } } })
+  }
+  const deleteTodo = (id: string) => {
+    const nextTodos = { ...todos }
+    delete nextTodos[id]
+    updateStore({ ...store, todos: nextTodos, sortedTodoIds: sortedTodoIds.filter(sId => sId !== id) })
+  }
   return (
     <div className="mx-auto max-w-xl">
       <header>
@@ -158,62 +198,38 @@ function App() {
       <main className='mx-auto max-w-md'>
         <h3>Todos</h3>
         <ul className="list-none px-0 py-4">
-          {sortedTodoIds
-            .map((id, index) => {
-              const todo = todos[id]
+          {sortedTodoIds.map((id, index) => {
+            return <>
+              <DropPlaceholder
+                key={`${'DropPlaceholder'}-${index}`}
+                index={index}
+                hidden={!inDragMode || id === dragTodoId || (index > 0 && sortedTodoIds[index - 1] === dragTodoId)}
+                isUnderDrag={inDragMode && dragOverTodoIndex === index}
+                setIsUnderDrag={setIsUnderDrag}
+                putDown={putDown}
+              />
+              <ToDoItemRender
+                key={id}
+                id={id}
+                todo={todos[id]}
+                updateTodo={updateTodo}
+                deleteTodo={deleteTodo}
+                dragId={dragTodoId}
+                inDragMode={inDragMode}
+                pickUp={(id) => setDragTodoId(id)}
+                cancelDrag={() => { setDragTodoId(undefined); setDragOverTodoIndex(undefined) }}
+              />
+            </>
+          })}
 
-              return (
-                <ToDoItemRender
-                  key={id}
-                  id={id}
-                  todo={todo}
-                  updateTodo={(id, nextTodo) => {
-                    updateStore({ ...store, todos: { ...todos, [id]: { ...todo, ...nextTodo } } })
-                  }}
-                  deleteTodo={(id) => {
-                    const nextTodos = { ...todos }
-                    delete nextTodos[id]
-                    updateStore({ ...store, todos: nextTodos, sortedTodoIds: sortedTodoIds.filter(sId => sId !== id) })
-                  }}
-                  dragId={dragTodoId}
-                  inDragMode={inDragMode}
-                  isUnderDrag={!!(dragTodoId && dragTodoId !== id && dragOverTodoId === id)}
-                  setIsUnderDrag={(id) => setDragOverTodoId(id)}
-                  previewAfter={indexOfDragTodo < index}
-                  pickUp={(id) => setDragTodoId(id)}
-                  putDown={(id) => {
-                    if (inDragMode) {
-                      const placeBeforeDropTodo = todos[dragTodoId].sortKey > todo.sortKey
-                      const nextSortKey = placeBeforeDropTodo
-                        ? index <= 0
-                          ? todos[id].sortKey - 1
-                          : todos[id].sortKey + todos[sortedTodoIds[index - 1]].sortKey / 2
-                        : index >= sortedTodoIds.length - 1
-                          ? todos[id].sortKey + 1
-                          : todos[id].sortKey + todos[sortedTodoIds[index + 1]].sortKey / 2
-
-                      const nextSortedTodo = [...sortedTodoIds]
-                      nextSortedTodo.splice(sortedTodoIds.indexOf(dragTodoId), 1)
-                      nextSortedTodo.splice(index, 0, dragTodoId)
-                      updateStore({
-                        ...store,
-                        todos: {
-                          ...todos,
-                          [dragTodoId]: {
-                            ...todos[dragTodoId],
-                            sortKey: nextSortKey
-                          }
-                        },
-                        sortedTodoIds: nextSortedTodo
-                      })
-                      setDragTodoId(undefined)
-                      setDragOverTodoId(undefined)
-                    }
-                  }}
-                  cancelDrag={() => { setDragTodoId(undefined); setDragOverTodoId(undefined) }}
-                />
-              )
-            })}
+          <DropPlaceholder
+            key={`${'DropPlaceholder'}-${sortedTodoIds.length}`}
+            index={sortedTodoIds.length}
+            hidden={!inDragMode || sortedTodoIds.at(- 1) === dragTodoId}
+            isUnderDrag={inDragMode && dragOverTodoIndex === sortedTodoIds.length}
+            setIsUnderDrag={setIsUnderDrag}
+            putDown={putDown}
+          />
 
           <li className='my-3 space-x-2 flex items-baseline text-lg'>
             <input type="checkbox" disabled />
