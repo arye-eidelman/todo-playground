@@ -1,35 +1,12 @@
 import { useState } from 'react'
 import './App.css'
 import { useLocalStore } from './hooks'
-
-type Todo = {
-  id: string,
-  title: string,
-  completed: boolean,
-  createdAt: string,
-  updatedAt: string,
-  deletedAt?: string,
-  dueAt?: string,
-  sortKey: number
-}
-
-// fix react events target missing classname (at least as an optinal property)
-declare global {
-  interface EventTarget {
-    className?: string;
-  }
-}
+import { TodoItemView } from './TodoItemView'
+import { Todo } from './types'
+import { TodoDropPlaceholder } from './TodoDropPlaceholder'
 
 function uniqueId() {
   return Date.now().toString()
-}
-
-function shortTitle(title: string) {
-  const length = 25
-  if (title.length <= length) {
-    return title
-  }
-  return title.slice(0, title.lastIndexOf(' ', length - 4)) + ' ...'
 }
 
 function newTodoTemplate(title = "", id = uniqueId()): Todo {
@@ -43,90 +20,7 @@ function newTodoTemplate(title = "", id = uniqueId()): Todo {
   }
 }
 
-const DropPlaceholder = ({
-  index,
-  hidden,
-  isUnderDrag,
-  setIsUnderDrag,
-  putDown,
-}: {
-  index: number,
-  hidden: boolean,
-  isUnderDrag: boolean,
-  setIsUnderDrag: (index?: number) => void
-  putDown: (index: number) => void,
-}) => {
-  return (
-    <div
-      hidden={hidden}
-      className={'-my-5 z-100 relative h-10 rounded-lg' + (isUnderDrag ? ' bg-gray-200/90' : '')}
-      onDrop={e => { e.preventDefault(); putDown(index) }}
-      onDragEnter={e => { e.preventDefault(); setIsUnderDrag(index) }}
-      onDragOver={e => { e.preventDefault(); setIsUnderDrag(index) }}
-      onDragLeave={e => { e.preventDefault(); setIsUnderDrag(undefined) }}
-    ></div>
-  )
-}
 
-const ToDoItemRender = ({
-  id,
-  todo,
-  updateTodo,
-  deleteTodo,
-  inDragMode,
-  dragId,
-  pickUp,
-  cancelDrag
-}: {
-  id: string,
-  todo: Todo,
-  updateTodo: (id: string, todo: Partial<Todo>) => void,
-  deleteTodo: (id: string) => void,
-  inDragMode?: boolean,
-  dragId?: string,
-  pickUp: (id: string) => void,
-  cancelDrag: () => void
-}) => {
-  const pointerEventClasses = '' //(inDragMode && id !== dragId ? ' pointer-events-none' : '')
-  const thisIsBeingDragged = inDragMode && id === dragId
-  return (
-    <li
-      id={'li_' + id ?? todo.id}
-    >
-      <div
-        id={'TodoItem_' + id ?? todo.id}
-        className={'TodoItem py-2 space-x-2 flex items-baseline text-lg rounded-lg' + pointerEventClasses + (thisIsBeingDragged ? ' opacity-25' : '')}
-      >
-        <input
-          type="checkbox"
-          className={pointerEventClasses}
-          title={`Mark ${todo.completed ? 'un' : ''}completed todo-item '${shortTitle(todo.title)}'`}
-          checked={todo.completed}
-          onChange={e => updateTodo(id, { completed: e.target.checked })}
-        />
-        <input
-          type="text"
-          className={'w-full text-sm py-1 px-2' + pointerEventClasses}
-          title="Todo-item title"
-          value={todo.title}
-          onChange={e => updateTodo(id, { title: e.target.value })}
-        />
-        <button
-          className={'bg-transparent border-0 text-lg' + pointerEventClasses}
-          title={`Trash todo-item '${shortTitle(todo.title)}'`}
-          onClick={() => deleteTodo(id)}>
-          🗑
-        </button>
-        <span
-          className={'TodoItemDragHandle text-lg' + pointerEventClasses}
-          draggable
-          onDragStart={(e) => pickUp(id)}
-          onDragEnd={() => cancelDrag()}
-        >⋮⋮⋮</span>
-      </div>
-    </li>
-  )
-}
 
 function App() {
   const [store, updateStore] = useLocalStore<{
@@ -200,7 +94,7 @@ function App() {
         <ul className="list-none px-0 py-4">
           {sortedTodoIds.map((id, index) => {
             return <>
-              <DropPlaceholder
+              <TodoDropPlaceholder
                 key={`${'DropPlaceholder'}-${index}`}
                 index={index}
                 hidden={!inDragMode || id === dragTodoId || (index > 0 && sortedTodoIds[index - 1] === dragTodoId)}
@@ -208,7 +102,7 @@ function App() {
                 setIsUnderDrag={setIsUnderDrag}
                 putDown={putDown}
               />
-              <ToDoItemRender
+              <TodoItemView
                 key={id}
                 id={id}
                 todo={todos[id]}
@@ -222,7 +116,7 @@ function App() {
             </>
           })}
 
-          <DropPlaceholder
+          <TodoDropPlaceholder
             key={`${'DropPlaceholder'}-${sortedTodoIds.length}`}
             index={sortedTodoIds.length}
             hidden={!inDragMode || sortedTodoIds.at(- 1) === dragTodoId}
@@ -232,12 +126,11 @@ function App() {
           />
 
           <li className='my-3 space-x-2 flex items-baseline text-lg'>
-            <input type="checkbox" disabled />
             <input
               type="text"
               className='w-full text-lg py-1 px-2'
               title="New todo-item title"
-              placeholder='I need to _________'
+              placeholder='Enter task here and hit enter'
               value={newTodo.title}
               onChange={e => {
                 updateStore({ ...store, newTodo: { ...newTodo, title: e.target.value } })
