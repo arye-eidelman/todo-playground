@@ -33,31 +33,30 @@ function App() {
   })
   const { tasks, sortedTaskIds, newTask } = store
   const [dragTaskId, setDragTaskId] = useState<string>()
-  const [dragOverTaskIndex, setDragOverTaskIndex] = useState<number>()
-  const inDragMode = typeof dragTaskId === "string"
+  const [dropTarget, setDropTarget] = useState<number>()
+  const inDragMode = typeof dragTaskId !== "undefined"
 
-  const setIsUnderDrag = (index?: number) => setDragOverTaskIndex(index)
-  const putDown = (downIndex: number) => {
-    if (inDragMode) {
+  const drop = (endIndex: number) => {
+    if (typeof dragTaskId !== "undefined") {
       let nextSortKey
-      if (downIndex === 0) {
-        nextSortKey = tasks[sortedTaskIds[downIndex]].sortKey - 1
-      } else if (downIndex === sortedTaskIds.length) {
-        nextSortKey = tasks[sortedTaskIds[downIndex - 1]].sortKey + 1
+      if (endIndex === 0) {
+        nextSortKey = tasks[sortedTaskIds[endIndex]].sortKey - 1
+      } else if (endIndex === sortedTaskIds.length) {
+        nextSortKey = tasks[sortedTaskIds[endIndex - 1]].sortKey + 1
       } else {
-        nextSortKey = (tasks[sortedTaskIds[downIndex]].sortKey + tasks[sortedTaskIds[downIndex - 1]].sortKey) / 2
+        nextSortKey = (tasks[sortedTaskIds[endIndex]].sortKey + tasks[sortedTaskIds[endIndex - 1]].sortKey) / 2
       }
 
+      const startIndex = sortedTaskIds.indexOf(dragTaskId)
       const nextSortedTask = [...sortedTaskIds]
-
-      const upIndex = sortedTaskIds.indexOf(dragTaskId)
-      if (downIndex < upIndex) {
-        nextSortedTask.splice(upIndex, 1)
-        nextSortedTask.splice(downIndex, 0, dragTaskId)
+      if (endIndex < startIndex) {
+        nextSortedTask.splice(startIndex, 1)
+        nextSortedTask.splice(endIndex, 0, dragTaskId)
       } else {
-        nextSortedTask.splice(downIndex, 0, dragTaskId)
-        nextSortedTask.splice(upIndex, 1)
+        nextSortedTask.splice(endIndex, 0, dragTaskId)
+        nextSortedTask.splice(startIndex, 1)
       }
+
       updateStore({
         ...store,
         tasks: {
@@ -70,7 +69,7 @@ function App() {
         sortedTaskIds: nextSortedTask
       })
       setDragTaskId(undefined)
-      setDragOverTaskIndex(undefined)
+      setDropTarget(undefined)
     }
   }
   const updateTask = (id: string, nextTask: Partial<Task>) => {
@@ -91,42 +90,40 @@ function App() {
       <main className='mx-auto max-w-md'>
         <h3>Tasks</h3>
         <ul className="list-none px-0 py-4">
-          {sortedTaskIds.map((id, index) => {
-            return <>
-              {inDragMode &&
-                <ReorderTasksDropZone
-                  key={`before-${id}`}
-                  index={index}
-                  hidden={id === dragTaskId || (index > 0 && sortedTaskIds[index - 1] === dragTaskId)}
-                  isUnderDrag={dragOverTaskIndex === index}
-                  setIsUnderDrag={setIsUnderDrag}
-                  putDown={putDown}
-                >
-                  <TaskPreview task={tasks[dragTaskId]} />
-                </ReorderTasksDropZone>
-              }
-              <TaskView
-                key={id}
-                id={id}
-                task={tasks[id]}
-                updateTask={updateTask}
-                deleteTask={deleteTask}
-                dragId={dragTaskId}
-                inDragMode={inDragMode}
-                pickUp={(id) => setDragTaskId(id)}
-                cancelDrag={() => { setDragTaskId(undefined); setDragOverTaskIndex(undefined) }}
-              />
-            </>
-          })}
+          {sortedTaskIds.map((id, index) => <>
+            {
+            inDragMode &&
+              <ReorderTasksDropZone
+                key={`before-${id}`}
+                index={index}
+                hidden={id === dragTaskId || (index > 0 && sortedTaskIds[index - 1] === dragTaskId)}
+                isDropTarget={dropTarget === index}
+                setDropTarget={setDropTarget}
+                drop={drop}
+              >
+                <TaskPreview task={tasks[dragTaskId ?? sortedTaskIds[0]]} />
+              </ReorderTasksDropZone>
+            }
+            <TaskView
+              key={id}
+              id={id}
+              task={tasks[id]}
+              updateTask={updateTask}
+              deleteTask={deleteTask}
+              dragTaskId={dragTaskId}
+              setDragTaskId={setDragTaskId}
+              // cancelDrag={() => { setDragTaskId(undefined); setDropTarget(undefined) }}
+            />
+          </>)}
 
           {inDragMode &&
             <ReorderTasksDropZone
               key='end-of-list'
               index={sortedTaskIds.length}
               hidden={sortedTaskIds.at(-1) === dragTaskId}
-              isUnderDrag={dragOverTaskIndex === sortedTaskIds.length}
-              setIsUnderDrag={setIsUnderDrag}
-              putDown={putDown}
+              isDropTarget={dropTarget === sortedTaskIds.length}
+              setDropTarget={setDropTarget}
+              drop={drop}
             >
               <TaskPreview task={tasks[dragTaskId]} />
             </ReorderTasksDropZone>

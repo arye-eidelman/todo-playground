@@ -13,28 +13,24 @@ export const TaskView = ({
   task,
   updateTask,
   deleteTask,
-  inDragMode,
-  dragId,
-  pickUp,
-  cancelDrag
+  dragTaskId,
+  setDragTaskId
 }: {
   id: string,
   task: Task,
   updateTask: (id: string, task: Partial<Task>) => void,
   deleteTask: (id: string) => void,
-  inDragMode?: boolean,
-  dragId?: string,
-  pickUp: (id: string) => void,
-  cancelDrag: () => void
+  dragTaskId: string | undefined,
+  setDragTaskId: (id?: string) => void
 }) => {
-  const thisIsBeingDragged = inDragMode && id === dragId
+  const thisIsBeingDragged = dragTaskId === id
   return (
     <li
       id={'li_' + id ?? task.id}
     >
       <div
         id={'Task_' + id ?? task.id}
-        className={'Task py-2 space-x-2 flex items-baseline text-lg rounded-lg' + (thisIsBeingDragged ? ' opacity-25' : '')}
+        className={'Task py-2 space-x-2 flex items-baseline text-lg rounded-lg transition-opacity ' + (thisIsBeingDragged ? ' opacity-25' : '')}
       >
         <input
           type="checkbox"
@@ -58,8 +54,8 @@ export const TaskView = ({
         <span
           className='TaskDragHandle text-lg'
           draggable
-          onDragStart={(e) => pickUp(id)}
-          onDragEnd={() => cancelDrag()}
+          onDragStart={(e) => setDragTaskId(id)}
+          onDragEnd={() => setDragTaskId()}
         >⋮⋮⋮</span>
       </div>
     </li>
