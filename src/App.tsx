@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import './App.css'
 import { useLocalStore } from './hooks'
-import { TodoItemView } from './TodoItemView'
-import { Todo } from './types'
-import { TodoDropPlaceholder } from './TodoDropPlaceholder'
+import { TaskView } from './TaskView'
+import { Task } from './types'
+import { ReorderTasksDropZone } from './ReorderTasksDropZone'
+import { TaskPreview } from './TaskPreview'
 
 function uniqueId() {
   return Date.now().toString()
 }
 
-function newTodoTemplate(title = "", id = uniqueId()): Todo {
+function newTaskTemplate(title = "", id = uniqueId()): Task {
   return {
     id,
     title,
@@ -20,128 +21,134 @@ function newTodoTemplate(title = "", id = uniqueId()): Todo {
   }
 }
 
-
-
 function App() {
   const [store, updateStore] = useLocalStore<{
-    todos: { [id: string]: Todo },
-    sortedTodoIds: string[],
-    newTodo: Todo
+    tasks: { [id: string]: Task },
+    sortedTaskIds: string[],
+    newTask: Task
   }>({
-    todos: {},
-    sortedTodoIds: [],
-    newTodo: newTodoTemplate(),
+    tasks: {},
+    sortedTaskIds: [],
+    newTask: newTaskTemplate(),
   })
-  const { todos, sortedTodoIds, newTodo } = store
-  const [dragTodoId, setDragTodoId] = useState<string>()
-  const [dragOverTodoIndex, setDragOverTodoIndex] = useState<number>()
-  const inDragMode = typeof dragTodoId === "string"
+  const { tasks, sortedTaskIds, newTask } = store
+  const [dragTaskId, setDragTaskId] = useState<string>()
+  const [dragOverTaskIndex, setDragOverTaskIndex] = useState<number>()
+  const inDragMode = typeof dragTaskId === "string"
 
-  const setIsUnderDrag = (index?: number) => setDragOverTodoIndex(index)
+  const setIsUnderDrag = (index?: number) => setDragOverTaskIndex(index)
   const putDown = (downIndex: number) => {
     if (inDragMode) {
       let nextSortKey
       if (downIndex === 0) {
-        nextSortKey = todos[sortedTodoIds[downIndex]].sortKey - 1
-      } else if (downIndex === sortedTodoIds.length) {
-        nextSortKey = todos[sortedTodoIds[downIndex - 1]].sortKey + 1
+        nextSortKey = tasks[sortedTaskIds[downIndex]].sortKey - 1
+      } else if (downIndex === sortedTaskIds.length) {
+        nextSortKey = tasks[sortedTaskIds[downIndex - 1]].sortKey + 1
       } else {
-        nextSortKey = (todos[sortedTodoIds[downIndex]].sortKey + todos[sortedTodoIds[downIndex - 1]].sortKey) / 2
+        nextSortKey = (tasks[sortedTaskIds[downIndex]].sortKey + tasks[sortedTaskIds[downIndex - 1]].sortKey) / 2
       }
 
-      const nextSortedTodo = [...sortedTodoIds]
+      const nextSortedTask = [...sortedTaskIds]
 
-      const upIndex = sortedTodoIds.indexOf(dragTodoId)
+      const upIndex = sortedTaskIds.indexOf(dragTaskId)
       if (downIndex < upIndex) {
-        nextSortedTodo.splice(upIndex, 1)
-        nextSortedTodo.splice(downIndex, 0, dragTodoId)
+        nextSortedTask.splice(upIndex, 1)
+        nextSortedTask.splice(downIndex, 0, dragTaskId)
       } else {
-        nextSortedTodo.splice(downIndex, 0, dragTodoId)
-        nextSortedTodo.splice(upIndex, 1)
+        nextSortedTask.splice(downIndex, 0, dragTaskId)
+        nextSortedTask.splice(upIndex, 1)
       }
       updateStore({
         ...store,
-        todos: {
-          ...todos,
-          [dragTodoId]: {
-            ...todos[dragTodoId],
+        tasks: {
+          ...tasks,
+          [dragTaskId]: {
+            ...tasks[dragTaskId],
             sortKey: nextSortKey
           }
         },
-        sortedTodoIds: nextSortedTodo
+        sortedTaskIds: nextSortedTask
       })
-      setDragTodoId(undefined)
-      setDragOverTodoIndex(undefined)
+      setDragTaskId(undefined)
+      setDragOverTaskIndex(undefined)
     }
   }
-  const updateTodo = (id: string, nextTodo: Partial<Todo>) => {
-    updateStore({ ...store, todos: { ...todos, [id]: { ...todos[id], ...nextTodo } } })
+  const updateTask = (id: string, nextTask: Partial<Task>) => {
+    updateStore({ ...store, tasks: { ...tasks, [id]: { ...tasks[id], ...nextTask } } })
   }
-  const deleteTodo = (id: string) => {
-    const nextTodos = { ...todos }
-    delete nextTodos[id]
-    updateStore({ ...store, todos: nextTodos, sortedTodoIds: sortedTodoIds.filter(sId => sId !== id) })
+  const deleteTask = (id: string) => {
+    const nexttasks = { ...tasks }
+    delete nexttasks[id]
+    updateStore({ ...store, tasks: nexttasks, sortedTaskIds: sortedTaskIds.filter(sId => sId !== id) })
   }
   return (
     <div className="mx-auto max-w-xl">
       <header>
-        <h1>Todo Playground</h1>
+        <h1>ToDo Playground</h1>
       </header>
       <hr />
 
       <main className='mx-auto max-w-md'>
-        <h3>Todos</h3>
+        <h3>Tasks</h3>
         <ul className="list-none px-0 py-4">
-          {sortedTodoIds.map((id, index) => {
+          {sortedTaskIds.map((id, index) => {
             return <>
-              <TodoDropPlaceholder
-                key={`${'DropPlaceholder'}-${index}`}
-                index={index}
-                hidden={!inDragMode || id === dragTodoId || (index > 0 && sortedTodoIds[index - 1] === dragTodoId)}
-                isUnderDrag={inDragMode && dragOverTodoIndex === index}
-                setIsUnderDrag={setIsUnderDrag}
-                putDown={putDown}
-              />
-              <TodoItemView
+              {inDragMode &&
+                <ReorderTasksDropZone
+                  key={`before-${id}`}
+                  index={index}
+                  hidden={id === dragTaskId || (index > 0 && sortedTaskIds[index - 1] === dragTaskId)}
+                  isUnderDrag={dragOverTaskIndex === index}
+                  setIsUnderDrag={setIsUnderDrag}
+                  putDown={putDown}
+                >
+                  <TaskPreview task={tasks[dragTaskId]} />
+                </ReorderTasksDropZone>
+              }
+              <TaskView
                 key={id}
                 id={id}
-                todo={todos[id]}
-                updateTodo={updateTodo}
-                deleteTodo={deleteTodo}
-                dragId={dragTodoId}
+                task={tasks[id]}
+                updateTask={updateTask}
+                deleteTask={deleteTask}
+                dragId={dragTaskId}
                 inDragMode={inDragMode}
-                pickUp={(id) => setDragTodoId(id)}
-                cancelDrag={() => { setDragTodoId(undefined); setDragOverTodoIndex(undefined) }}
+                pickUp={(id) => setDragTaskId(id)}
+                cancelDrag={() => { setDragTaskId(undefined); setDragOverTaskIndex(undefined) }}
               />
             </>
           })}
 
-          <TodoDropPlaceholder
-            key={`${'DropPlaceholder'}-${sortedTodoIds.length}`}
-            index={sortedTodoIds.length}
-            hidden={!inDragMode || sortedTodoIds.at(- 1) === dragTodoId}
-            isUnderDrag={inDragMode && dragOverTodoIndex === sortedTodoIds.length}
-            setIsUnderDrag={setIsUnderDrag}
-            putDown={putDown}
-          />
+          {inDragMode &&
+            <ReorderTasksDropZone
+              key='end-of-list'
+              index={sortedTaskIds.length}
+              hidden={sortedTaskIds.at(-1) === dragTaskId}
+              isUnderDrag={dragOverTaskIndex === sortedTaskIds.length}
+              setIsUnderDrag={setIsUnderDrag}
+              putDown={putDown}
+            >
+              <TaskPreview task={tasks[dragTaskId]} />
+            </ReorderTasksDropZone>
+          }
 
-          <li className='my-3 space-x-2 flex items-baseline text-lg'>
+          <li key="new-item" className='my-3 space-x-2 flex items-baseline text-lg'>
             <input
               type="text"
               className='w-full text-lg py-1 px-2'
-              title="New todo-item title"
+              title="New task-item title"
               placeholder='Enter task here and hit enter'
-              value={newTodo.title}
+              value={newTask.title}
               onChange={e => {
-                updateStore({ ...store, newTodo: { ...newTodo, title: e.target.value } })
+                updateStore({ ...store, newTask: { ...newTask, title: e.target.value } })
               }}
               onKeyDown={e => {
                 if (e.key === "Enter") {
                   updateStore({
                     ...store,
-                    newTodo: newTodoTemplate(),
-                    sortedTodoIds: [...sortedTodoIds, newTodo.id],
-                    todos: { ...todos, [newTodo.id]: newTodo },
+                    newTask: newTaskTemplate(),
+                    sortedTaskIds: [...sortedTaskIds, newTask.id],
+                    tasks: { ...tasks, [newTask.id]: newTask },
                   })
                 }
               }}
