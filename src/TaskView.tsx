@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from 'react'
 import { Task } from './types'
 
 function shortTitle(title: string) {
@@ -23,15 +24,21 @@ export const TaskView = ({
   dragTaskId: string | undefined,
   setDragTaskId: (id?: string) => void
 }) => {
-  const thisIsBeingDragged = dragTaskId === id
+  const [collapsed, setCollapsed] = useState(true)
+
+  useEffect(() => {
+    setCollapsed(false)
+  }, [])
+
   return (
     <li
-      id={'li_' + id ?? task.id}
+      id={id}
+      className={`overflow-hidden transition-[height,opacity] duration-[200ms] box-border  rounded-lg
+      ${dragTaskId === id ? 'opacity-50' : 'opacity-100'}
+      ${collapsed || task.deletedAt ? 'h-0' : 'h-12'}`
+      }
     >
-      <div
-        id={'Task_' + id ?? task.id}
-        className={'Task py-2 space-x-2 flex items-baseline text-lg rounded-lg transition-opacity ' + (thisIsBeingDragged ? ' opacity-25' : '')}
-      >
+      <div className='py-2 space-x-2 flex items-center text-lg'>
         <input
           type="checkbox"
           title={`Mark ${task.completed ? 'un' : ''}completed task-item '${shortTitle(task.title)}'`}
@@ -41,7 +48,7 @@ export const TaskView = ({
         <input
           type="text"
           className='w-full text-sm py-1 px-2'
-          title="Task-item title"
+          title="title"
           value={task.title}
           onChange={e => updateTask(id, { title: e.target.value })}
         />
@@ -52,7 +59,7 @@ export const TaskView = ({
           🗑
         </button>
         <span
-          className='TaskDragHandle text-lg'
+          className='text-lg'
           draggable
           onDragStart={(e) => setDragTaskId(id)}
           onDragEnd={() => setDragTaskId()}

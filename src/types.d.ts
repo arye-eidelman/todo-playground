@@ -15,3 +15,10 @@ export type Task = {
   dueAt?: string,
   sortKey: number
 }
+
+
+export type DeletedTask = {
+  id: string,
+  deletedAt: string,
+  sortKey: number
+}

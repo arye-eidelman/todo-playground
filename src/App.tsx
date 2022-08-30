@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import './App.css'
 import { useLocalStore } from './hooks'
 import { TaskView } from './TaskView'
-import { Task } from './types'
+import { Task, DeletedTask } from './types'
 import { ReorderTasksDropZone } from './ReorderTasksDropZone'
 import { TaskPreview } from './TaskPreview'
 
@@ -23,7 +23,7 @@ function newTaskTemplate(title = "", id = uniqueId()): Task {
 
 function App() {
   const [store, updateStore] = useLocalStore<{
-    tasks: { [id: string]: Task },
+    tasks: { [id: string]: Task | DeletedTask },
     sortedTaskIds: string[],
     newTask: Task
   }>({
@@ -76,9 +76,16 @@ function App() {
     updateStore({ ...store, tasks: { ...tasks, [id]: { ...tasks[id], ...nextTask } } })
   }
   const deleteTask = (id: string) => {
-    const nexttasks = { ...tasks }
-    delete nexttasks[id]
-    updateStore({ ...store, tasks: nexttasks, sortedTaskIds: sortedTaskIds.filter(sId => sId !== id) })
+    // soft delete now and hard delete after the animation completes
+    updateStore({ ...store, tasks: { ...tasks, [id]: { ...tasks[id], deletedAt: new Date().toISOString() } } })
+    setTimeout(() => {
+      updateStore((store) => {
+        setDragTaskId(dragTaskId => dragTaskId && store.tasks[dragTaskId].deletedAt ? undefined : dragTaskId)
+        const nextTasks = { ...store.tasks }
+        delete nextTasks[id]
+        return { ...store, tasks: nextTasks, sortedTaskIds: store.sortedTaskIds.filter(taskId => taskId !== id) }
+      })
+    }, 1500);
   }
   return (
     <div className="mx-auto max-w-xl">
@@ -90,46 +97,47 @@ function App() {
       <main className='mx-auto max-w-md'>
         <h3>Tasks</h3>
         <ul className="list-none px-0 py-4">
-          {sortedTaskIds.map((id, index) => <>
-            {
-            inDragMode &&
-              <ReorderTasksDropZone
-                key={`before-${id}`}
-                index={index}
-                hidden={id === dragTaskId || (index > 0 && sortedTaskIds[index - 1] === dragTaskId)}
-                isDropTarget={dropTarget === index}
-                setDropTarget={setDropTarget}
-                drop={drop}
-              >
-                <TaskPreview task={tasks[dragTaskId ?? sortedTaskIds[0]]} />
-              </ReorderTasksDropZone>
-            }
-            <TaskView
-              key={id}
-              id={id}
-              task={tasks[id]}
-              updateTask={updateTask}
-              deleteTask={deleteTask}
-              dragTaskId={dragTaskId}
-              setDragTaskId={setDragTaskId}
-              // cancelDrag={() => { setDragTaskId(undefined); setDropTarget(undefined) }}
-            />
-          </>)}
+          {sortedTaskIds.map((id, index) => {
+
+            const task = tasks[id]
+            if (!('title' in task) || !task.title) { return null }
+            return <Fragment key={id}>
+              {
+                inDragMode && typeof tasks[dragTaskId].deletedAt !== 'string' &&
+                <ReorderTasksDropZone
+                  index={index}
+                  hidden={id === dragTaskId || (index > 0 && sortedTaskIds[index - 1] === dragTaskId)}
+                  isDropTarget={dropTarget === index}
+                  setDropTarget={setDropTarget}
+                  drop={drop}
+                >
+                  <TaskPreview task={tasks[dragTaskId] as Task} />
+                </ReorderTasksDropZone>
+              }
+              <TaskView
+                id={id}
+                task={task}
+                updateTask={updateTask}
+                deleteTask={deleteTask}
+                dragTaskId={dragTaskId}
+                setDragTaskId={setDragTaskId}
+              />
+            </Fragment>
+          })}
 
           {inDragMode &&
             <ReorderTasksDropZone
-              key='end-of-list'
               index={sortedTaskIds.length}
               hidden={sortedTaskIds.at(-1) === dragTaskId}
               isDropTarget={dropTarget === sortedTaskIds.length}
               setDropTarget={setDropTarget}
               drop={drop}
             >
-              <TaskPreview task={tasks[dragTaskId]} />
+              <TaskPreview task={tasks[dragTaskId] as Task} />
             </ReorderTasksDropZone>
           }
 
-          <li key="new-item" className='my-3 space-x-2 flex items-baseline text-lg'>
+          <li key="new-item" className='my-3 space-x-2 flex items-baseline text-lg sticky bottom-2'>
             <input
               type="text"
               className='w-full text-lg py-1 px-2'
@@ -140,7 +148,7 @@ function App() {
                 updateStore({ ...store, newTask: { ...newTask, title: e.target.value } })
               }}
               onKeyDown={e => {
-                if (e.key === "Enter") {
+                if (e.key === "Enter" && newTask.title.length > 0) {
                   updateStore({
                     ...store,
                     newTask: newTaskTemplate(),
