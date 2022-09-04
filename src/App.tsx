@@ -1,8 +1,7 @@
 import { Fragment, useState } from 'react'
-import './App.css'
 import { useLocalStore } from './hooks'
 import { TaskView } from './TaskView'
-import { Task, DeletedTask } from './types'
+import { Task, TaskList, Store } from './types'
 import { ReorderTasksDropZone } from './ReorderTasksDropZone'
 import { TaskPreview } from './TaskPreview'
 
@@ -10,31 +9,60 @@ function uniqueId() {
   return Date.now().toString()
 }
 
-function newTaskTemplate(title = "", id = uniqueId()): Task {
+function newTaskTemplate(taskListId: TaskList['id'], task: Partial<Task>): Task {
   return {
-    id,
-    title,
+    taskListId,
+    id: uniqueId(),
+    title: "",
     completed: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     sortKey: Date.now(),
+    ...task
   }
 }
 
 function App() {
-  const [store, updateStore] = useLocalStore<{
-    tasks: { [id: string]: Task | DeletedTask },
-    sortedTaskIds: string[],
-    newTask: Task
-  }>({
+  const [store, updateStore] = useLocalStore<Store>({
     tasks: {},
-    sortedTaskIds: [],
-    newTask: newTaskTemplate(),
+    taskLists: {
+      "1": {
+        id: "1",
+        title: "Tasks",
+        sortedTaskIds: [],
+        newTaskTitle: "",
+      }
+    },
+    sortedTaskListIds: ["1"],
+    newTaskListTitle: ""
   })
-  const { tasks, sortedTaskIds, newTask } = store
-  const [dragTaskId, setDragTaskId] = useState<string>()
+
+  // tasks
+  const { tasks, taskLists } = store
+
+  // task lists
+  const defaultTaskListId = store.sortedTaskListIds[0]
+  const defaultTaskList = store.taskLists[defaultTaskListId]
+  const { sortedTaskIds, newTaskTitle } = defaultTaskList
+
+  // drag 'n drop
+  const [dragTaskId, setDragTaskId] = useState<Task['id']>()
   const [dropTarget, setDropTarget] = useState<number>()
   const inDragMode = typeof dragTaskId !== "undefined"
+
+
+  function updateTaskList(id: TaskList['id'], taskList: Partial<TaskList> | React.SetStateAction<TaskList>) {
+
+    updateStore(store => ({
+      ...store, taskLists: {
+        ...store.taskLists, [id]: {
+          ...store.taskLists[id], ...(
+            typeof taskList === "function" ? taskList(store.taskLists[id]) : taskList
+          )
+        }
+      }
+    }))
+  }
 
   const drop = (endIndex: number) => {
     if (typeof dragTaskId !== "undefined") {
@@ -48,13 +76,13 @@ function App() {
       }
 
       const startIndex = sortedTaskIds.indexOf(dragTaskId)
-      const nextSortedTask = [...sortedTaskIds]
+      const nextSortedTaskIds = [...sortedTaskIds]
       if (endIndex < startIndex) {
-        nextSortedTask.splice(startIndex, 1)
-        nextSortedTask.splice(endIndex, 0, dragTaskId)
+        nextSortedTaskIds.splice(startIndex, 1)
+        nextSortedTaskIds.splice(endIndex, 0, dragTaskId)
       } else {
-        nextSortedTask.splice(endIndex, 0, dragTaskId)
-        nextSortedTask.splice(startIndex, 1)
+        nextSortedTaskIds.splice(endIndex, 0, dragTaskId)
+        nextSortedTaskIds.splice(startIndex, 1)
       }
 
       updateStore({
@@ -66,16 +94,47 @@ function App() {
             sortKey: nextSortKey
           }
         },
-        sortedTaskIds: nextSortedTask
+        taskLists: {
+          ...taskLists,
+          [defaultTaskList.id]: {
+            ...defaultTaskList,
+            sortedTaskIds: nextSortedTaskIds
+          }
+        }
       })
       setDragTaskId(undefined)
       setDropTarget(undefined)
     }
   }
-  const updateTask = (id: string, nextTask: Partial<Task>) => {
-    updateStore({ ...store, tasks: { ...tasks, [id]: { ...tasks[id], ...nextTask } } })
+  const updateTask = (id: Task['id'], task: Partial<Task> | React.SetStateAction<Task>) => {
+    updateStore(store => ({
+      ...store, tasks: {
+        ...store.tasks, [id]: {
+          ...store.tasks[id], ...(
+            typeof task === "function" ? task(store.tasks[id]) : task
+          )
+        }
+      }
+    }))
   }
-  const deleteTask = (id: string) => {
+
+  const createTask = (taskListId: TaskList['id'], title: string) => {
+    const newTask = newTaskTemplate(taskListId, { title })
+    updateStore({
+      ...store,
+      tasks: { ...tasks, [newTask.id]: { ...newTask } },
+      taskLists: {
+        ...taskLists,
+        [taskListId]: {
+          ...taskLists[taskListId],
+          sortedTaskIds: [...taskLists[taskListId].sortedTaskIds, newTask.id],
+          newTaskTitle: ""
+        }
+      }
+    })
+  }
+
+  const deleteTask = (id: Task['id']) => {
     // soft delete now and hard delete after the animation completes
     updateStore({ ...store, tasks: { ...tasks, [id]: { ...tasks[id], deletedAt: new Date().toISOString() } } })
     setTimeout(() => {
@@ -83,7 +142,19 @@ function App() {
         setDragTaskId(dragTaskId => dragTaskId && store.tasks[dragTaskId].deletedAt ? undefined : dragTaskId)
         const nextTasks = { ...store.tasks }
         delete nextTasks[id]
-        return { ...store, tasks: nextTasks, sortedTaskIds: store.sortedTaskIds.filter(taskId => taskId !== id) }
+        const taskListId = store.tasks[id].taskListId
+        const taskList = store.taskLists[taskListId]
+        return {
+          ...store,
+          tasks: nextTasks,
+          taskLists: {
+            ...store.taskLists,
+            [taskListId]: {
+              ...taskList,
+              sortedTaskIds: taskList.sortedTaskIds.filter(taskId => taskId !== id)
+            }
+          }
+        }
       })
     }, 1500);
   }
@@ -95,15 +166,11 @@ function App() {
       <hr />
 
       <main className='mx-auto max-w-md'>
-        <h3>Tasks</h3>
+        <h3>{defaultTaskList.title}</h3>
         <ul className="list-none px-0 py-4">
-          {sortedTaskIds.map((id, index) => {
-
-            const task = tasks[id]
-            if (!('title' in task) || !task.title) { return null }
-            return <Fragment key={id}>
-              {
-                inDragMode && typeof tasks[dragTaskId].deletedAt !== 'string' &&
+          {sortedTaskIds.map((id, index) => (
+            <Fragment key={id}>
+              {inDragMode && typeof tasks[dragTaskId].deletedAt !== 'string' &&
                 <ReorderTasksDropZone
                   index={index}
                   hidden={id === dragTaskId || (index > 0 && sortedTaskIds[index - 1] === dragTaskId)}
@@ -116,14 +183,14 @@ function App() {
               }
               <TaskView
                 id={id}
-                task={task}
+                task={tasks[id]}
                 updateTask={updateTask}
                 deleteTask={deleteTask}
                 dragTaskId={dragTaskId}
                 setDragTaskId={setDragTaskId}
               />
             </Fragment>
-          })}
+          ))}
 
           {inDragMode &&
             <ReorderTasksDropZone
@@ -143,18 +210,11 @@ function App() {
               className='w-full text-lg py-1 px-2'
               title="New task-item title"
               placeholder='Enter task here and hit enter'
-              value={newTask.title}
-              onChange={e => {
-                updateStore({ ...store, newTask: { ...newTask, title: e.target.value } })
-              }}
+              value={defaultTaskList.newTaskTitle}
+              onChange={e => updateTaskList(defaultTaskListId, { ...defaultTaskList, newTaskTitle: e.target.value })}
               onKeyDown={e => {
-                if (e.key === "Enter" && newTask.title.length > 0) {
-                  updateStore({
-                    ...store,
-                    newTask: newTaskTemplate(),
-                    sortedTaskIds: [...sortedTaskIds, newTask.id],
-                    tasks: { ...tasks, [newTask.id]: newTask },
-                  })
+                if (e.key === "Enter" && newTaskTitle.length > 0) {
+                  createTask(defaultTaskListId, newTaskTitle)
                 }
               }}
             />

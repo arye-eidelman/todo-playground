@@ -1,12 +1,6 @@
-// fix react events target missing classname (at least as an optinal property)
-declare global {
-  interface EventTarget {
-    className?: string;
-  }
-}
-
 export type Task = {
   id: string,
+  taskListId: string,
   title: string,
   completed: boolean,
   createdAt: string,
@@ -16,9 +10,16 @@ export type Task = {
   sortKey: number
 }
 
-
-export type DeletedTask = {
+export type TaskList = {
   id: string,
-  deletedAt: string,
-  sortKey: number
+  title: string,
+  sortedTaskIds: Task['id'][],
+  newTaskTitle: string
+}
+
+export type Store = {
+  tasks: Record<Task['id'], Task>,
+  taskLists: Record<TaskList['id'], TaskList>,
+  sortedTaskListIds: TaskList['id'][]
+  newTaskListTitle: string
 }

@@ -16,7 +16,7 @@ export const ReorderTasksDropZone = ({
   return (
     <div
       hidden={hidden}
-      className={'my-[-1.375rem] h-11 z-100 relative transition-opacity duration-100 ' + (isDropTarget ? 'opacity-100' : 'opacity-0')}
+      className={'my-[-1.375rem] h-11 relative transition-opacity duration-100 ' + (isDropTarget ? 'opacity-100' : 'opacity-0')}
       onDrop={e => { e.preventDefault(); drop(index) }}
       onDragEnter={e => { e.preventDefault(); setDropTarget(index) }}
       onDragOver={e => { e.preventDefault(); setDropTarget(index) }}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Task } from './types'
 
 function shortTitle(title: string) {
@@ -17,12 +17,12 @@ export const TaskView = ({
   dragTaskId,
   setDragTaskId
 }: {
-  id: string,
+  id: Task['id'],
   task: Task,
-  updateTask: (id: string, task: Partial<Task>) => void,
-  deleteTask: (id: string) => void,
-  dragTaskId: string | undefined,
-  setDragTaskId: (id?: string) => void
+  updateTask: (id: Task['id'], task: Partial<Task>) => void,
+  deleteTask: (id: Task['id']) => void,
+  dragTaskId: Task['id'] | undefined,
+  setDragTaskId: (id?: Task['id']) => void
 }) => {
   const [collapsed, setCollapsed] = useState(true)
 
@@ -33,7 +33,7 @@ export const TaskView = ({
   return (
     <li
       id={id}
-      className={`overflow-hidden transition-[height,opacity] duration-[200ms] box-border  rounded-lg
+      className={`overflow-hidden transition-[height,opacity] duration-[200ms] box-border rounded-lg
       ${dragTaskId === id ? 'opacity-50' : 'opacity-100'}
       ${collapsed || task.deletedAt ? 'h-0' : 'h-12'}`
       }
