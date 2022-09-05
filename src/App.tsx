@@ -1,9 +1,7 @@
-import { Fragment, useState } from 'react'
+import { useState } from 'react'
 import { useLocalStore } from './hooks'
-import { TaskView } from './TaskView'
+import { TaskListView } from './TaskListView'
 import { Task, TaskList, Store } from './types'
-import { ReorderTasksDropZone } from './ReorderTasksDropZone'
-import { TaskPreview } from './TaskPreview'
 
 function uniqueId() {
   return Date.now().toString()
@@ -43,7 +41,7 @@ function App() {
   // task lists
   const defaultTaskListId = store.sortedTaskListIds[0]
   const defaultTaskList = store.taskLists[defaultTaskListId]
-  const { sortedTaskIds, newTaskTitle } = defaultTaskList
+  const { sortedTaskIds } = defaultTaskList
 
   // drag 'n drop
   const [dragTaskId, setDragTaskId] = useState<Task['id']>()
@@ -165,61 +163,22 @@ function App() {
       </header>
       <hr />
 
-      <main className='mx-auto max-w-md'>
-        <h3>{defaultTaskList.title}</h3>
-        <ul className="list-none px-0 py-4">
-          {sortedTaskIds.map((id, index) => (
-            <Fragment key={id}>
-              {inDragMode && typeof tasks[dragTaskId].deletedAt !== 'string' &&
-                <ReorderTasksDropZone
-                  index={index}
-                  hidden={id === dragTaskId || (index > 0 && sortedTaskIds[index - 1] === dragTaskId)}
-                  isDropTarget={dropTarget === index}
-                  setDropTarget={setDropTarget}
-                  drop={drop}
-                >
-                  <TaskPreview task={tasks[dragTaskId] as Task} />
-                </ReorderTasksDropZone>
-              }
-              <TaskView
-                id={id}
-                task={tasks[id]}
-                updateTask={updateTask}
-                deleteTask={deleteTask}
-                dragTaskId={dragTaskId}
-                setDragTaskId={setDragTaskId}
-              />
-            </Fragment>
-          ))}
-
-          {inDragMode &&
-            <ReorderTasksDropZone
-              index={sortedTaskIds.length}
-              hidden={sortedTaskIds.at(-1) === dragTaskId}
-              isDropTarget={dropTarget === sortedTaskIds.length}
-              setDropTarget={setDropTarget}
-              drop={drop}
-            >
-              <TaskPreview task={tasks[dragTaskId] as Task} />
-            </ReorderTasksDropZone>
-          }
-
-          <li key="new-item" className='my-3 space-x-2 flex items-baseline text-lg sticky bottom-2'>
-            <input
-              type="text"
-              className='w-full text-lg py-1 px-2'
-              title="New task-item title"
-              placeholder='Enter task here and hit enter'
-              value={defaultTaskList.newTaskTitle}
-              onChange={e => updateTaskList(defaultTaskListId, { ...defaultTaskList, newTaskTitle: e.target.value })}
-              onKeyDown={e => {
-                if (e.key === "Enter" && newTaskTitle.length > 0) {
-                  createTask(defaultTaskListId, newTaskTitle)
-                }
-              }}
-            />
-          </li>
-        </ul>
+      <main>
+        <TaskListView {...{
+          taskList: defaultTaskList,
+          inDragMode,
+          tasks,
+          dragTaskId,
+          dropTarget,
+          setDropTarget,
+          updateTaskList,
+          createTask,
+          updateTask,
+          deleteTask,
+          setDragTaskId,
+          drop,
+        }}
+        />
       </main>
 
       <footer>
