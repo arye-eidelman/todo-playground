@@ -1,8 +1,9 @@
-import React, { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import { TaskView } from './TaskView'
 import { Task, TaskList, Store } from './types'
 import { ReorderTasksDropZone } from './ReorderTasksDropZone'
 import { TaskPreview } from './TaskPreview'
+import { ModalDialog } from './ModalDialog'
 
 export const TaskListView = ({
   taskList,
@@ -30,10 +31,55 @@ export const TaskListView = ({
   drop: (endIndex: number) => void,
 }) => {
   const { sortedTaskIds, newTaskTitle } = taskList
+  const [editMode, setEditMode] = useState(false)
+  const [tempTitle, setTempTitle] = useState(taskList.title)
 
   return (
     <div className='mx-auto max-w-md'>
-      <h3>{taskList.title}</h3>
+      <div className='flex justify-between'>
+        <h3>{taskList.title}</h3>
+        <button
+          className='bg-transparent border-0 text-lg'
+          title={`Edit task-list '${taskList.title}'`}
+          onClick={() => setEditMode(!editMode)}>
+          ✎
+        </button>
+      </div>
+      <ModalDialog open={editMode}
+        className='w-full max-w-md backdrop:bg-neutral-500/50'
+        onClose={() => setEditMode(false)}
+      >
+        <form onSubmit={e => {
+          e.preventDefault()
+          updateTaskList(taskList.id, { title: tempTitle })
+          setEditMode(false)
+        }}>
+          <h2>Edit Task List</h2>
+          <input
+            type="text box-bordr"
+            className='box-border w-full text-xl py-1 px-2'
+            value={tempTitle}
+            onChange={e => setTempTitle(e.target.value)}
+            autoFocus
+          />
+          <div className='flex justify-end mt-4 gap-2'>
+            <button
+              type="button"
+              className='bg-transparent border-0 text-2xl w-10 h-10 flex justify-center items-center'
+              title={`Edit task-list '${taskList.title}'`}
+              onClick={e => {
+                e.preventDefault()
+                setTempTitle(taskList.title)
+                setEditMode(false)
+              }}>
+              <span>✖</span>
+            </button>
+            <button type="submit" className='bg-transparent border-0 text-2xl w-10 h-10 flex justify-center items-center'>
+              <span>✔</span>
+            </button>
+          </div>
+        </form>
+      </ModalDialog>
       <ul className="list-none px-0 py-4">
         {sortedTaskIds.map((id, index) => (
           <Fragment key={id}>

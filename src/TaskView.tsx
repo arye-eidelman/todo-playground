@@ -41,7 +41,7 @@ export const TaskView = ({
       <div className='py-2 space-x-2 flex items-center text-lg'>
         <input
           type="checkbox"
-          title={`Mark ${task.completed ? 'un' : ''}completed task-item '${shortTitle(task.title)}'`}
+          title={`Mark ${task.completed ? 'un' : ''}completed task '${shortTitle(task.title)}'`}
           checked={task.completed}
           onChange={e => updateTask(id, { completed: e.target.checked })}
         />
@@ -54,7 +54,7 @@ export const TaskView = ({
         />
         <button
           className='bg-transparent border-0 text-lg'
-          title={`Trash task-item '${shortTitle(task.title)}'`}
+          title={`Trash task '${shortTitle(task.title)}'`}
           onClick={() => deleteTask(id)}>
           🗑
         </button>
