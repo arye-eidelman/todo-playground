@@ -12,6 +12,7 @@ export const TaskListView = ({
   dropTarget,
   setDropTarget,
   updateTaskList,
+  deleteTaskList,
   createTask,
   updateTask,
   deleteTask,
@@ -24,6 +25,7 @@ export const TaskListView = ({
   dropTarget?: number,
   setDropTarget: React.Dispatch<React.SetStateAction<number | undefined>>,
   updateTaskList: (id: TaskList['id'], taskList: Partial<TaskList> | React.SetStateAction<TaskList>) => void,
+  deleteTaskList: (id: TaskList['id']) => void,
   createTask: (taskListId: TaskList['id'], title: string) => void,
   updateTask: (id: Task['id'], task: Partial<Task> | React.SetStateAction<Task>) => void,
   deleteTask: (id: Task['id']) => void,
@@ -38,12 +40,20 @@ export const TaskListView = ({
     <div className='mx-auto max-w-md'>
       <div className='flex justify-between'>
         <h3>{taskList.title}</h3>
-        <button
-          className='bg-transparent border-0 text-lg'
-          title={`Edit task-list '${taskList.title}'`}
-          onClick={() => setEditMode(!editMode)}>
-          ✎
-        </button>
+        <div>
+          <button
+            className='bg-transparent border-0 text-lg'
+            title={`Edit task-list '${taskList.title}'`}
+            onClick={() => setEditMode(!editMode)}>
+            ✎
+          </button>
+          <button
+            className='bg-transparent border-0 text-lg'
+            title={`Edit task-list '${taskList.title}'`}
+            onClick={() => deleteTaskList(taskList.id)}>
+            🗑
+          </button>
+        </div>
       </div>
       <ModalDialog open={editMode}
         className='w-full max-w-md backdrop:bg-neutral-500/50'

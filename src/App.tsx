@@ -19,6 +19,17 @@ function newTaskTemplate(taskListId: TaskList['id'], task: Partial<Task>): Task 
     ...task
   }
 }
+function newTaskListTemplate(taskList: Partial<TaskList> = {}): TaskList {
+  return {
+    id: uniqueId(),
+    title: "New List",
+    sortedTaskIds: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    newTaskTitle: "",
+    ...taskList
+  }
+}
 
 function App() {
   const [store, updateStore] = useLocalStore<Store>({
@@ -36,12 +47,8 @@ function App() {
   })
 
   // tasks
-  const { tasks, taskLists } = store
+  const { tasks, taskLists, sortedTaskListIds } = store
 
-  // task lists
-  const defaultTaskListId = store.sortedTaskListIds[0]
-  const defaultTaskList = store.taskLists[defaultTaskListId]
-  const { sortedTaskIds } = defaultTaskList
 
   // drag 'n drop
   const [dragTaskId, setDragTaskId] = useState<Task['id']>()
@@ -49,17 +56,58 @@ function App() {
   const inDragMode = typeof dragTaskId !== "undefined"
 
 
-  function updateTaskList(id: TaskList['id'], taskList: Partial<TaskList> | React.SetStateAction<TaskList>) {
+  // task lists
+  const nonDeletedSortedTaskListIds = sortedTaskListIds.filter(id => !taskLists[id].deletedAt)
+  const [selectedTaskListId, setSelectedTaskListIId] = useState(nonDeletedSortedTaskListIds[0])
+  if (!selectedTaskListId) {
+    return null
+  }
+  const selectedTaskList = taskLists[selectedTaskListId]
+  const { sortedTaskIds } = selectedTaskList
 
+
+  function createTaskList() {
+    const taskList = newTaskListTemplate()
+    updateStore({
+      ...store,
+      taskLists: { ...taskLists, [taskList.id]: taskList },
+      sortedTaskListIds: [...sortedTaskListIds, taskList.id]
+    })
+  }
+
+  function updateTaskList(id: TaskList['id'], taskList: Partial<TaskList> | React.SetStateAction<TaskList>) {
     updateStore(store => ({
       ...store, taskLists: {
         ...store.taskLists, [id]: {
-          ...store.taskLists[id], ...(
-            typeof taskList === "function" ? taskList(store.taskLists[id]) : taskList
-          )
+          ...store.taskLists[id],
+          ...(typeof taskList === "function" ? taskList(store.taskLists[id]) : taskList),
+          updatedAt: new Date().toISOString()
         }
       }
     }))
+  }
+
+  function deleteTaskList(id: TaskList['id']) {
+    const newTaskList = newTaskListTemplate({ title: "Tasks" })
+    const addTask = sortedTaskListIds.length === 1
+    updateStore({
+      ...store,
+      taskLists: {
+        ...taskLists,
+        [id]: { ...taskLists[id], deletedAt: new Date().toISOString() },
+        ...(addTask ? { [newTaskList.id]: newTaskList } : {})
+      },
+      sortedTaskListIds: [...sortedTaskListIds, ...(addTask ? [newTaskList.id] : [])]
+    })
+    setTimeout(() => {
+      updateStore((store) => {
+        const nextTaskLists = { ...store.taskLists }
+        delete nextTaskLists[id]
+        const nextSortedTaskListids = store.sortedTaskListIds.filter(taskListId => taskListId !== id)
+
+        return { ...store, taskLists: nextTaskLists, sortedTaskListIds: nextSortedTaskListids }
+      })
+    }, 1500);
   }
 
   const drop = (endIndex: number) => {
@@ -94,8 +142,8 @@ function App() {
         },
         taskLists: {
           ...taskLists,
-          [defaultTaskList.id]: {
-            ...defaultTaskList,
+          [selectedTaskList.id]: {
+            ...selectedTaskList,
             sortedTaskIds: nextSortedTaskIds
           }
         }
@@ -103,17 +151,6 @@ function App() {
       setDragTaskId(undefined)
       setDropTarget(undefined)
     }
-  }
-  const updateTask = (id: Task['id'], task: Partial<Task> | React.SetStateAction<Task>) => {
-    updateStore(store => ({
-      ...store, tasks: {
-        ...store.tasks, [id]: {
-          ...store.tasks[id], ...(
-            typeof task === "function" ? task(store.tasks[id]) : task
-          )
-        }
-      }
-    }))
   }
 
   const createTask = (taskListId: TaskList['id'], title: string) => {
@@ -132,6 +169,19 @@ function App() {
     })
   }
 
+  const updateTask = (id: Task['id'], task: Partial<Task> | React.SetStateAction<Task>) => {
+    updateStore(store => ({
+      ...store, tasks: {
+        ...store.tasks, [id]: {
+          ...store.tasks[id],
+          ...(typeof task === "function" ? task(store.tasks[id]) : task),
+          updatedAt: new Date().toISOString()
+        }
+      }
+    }))
+  }
+
+
   const deleteTask = (id: Task['id']) => {
     // soft delete now and hard delete after the animation completes
     updateStore({ ...store, tasks: { ...tasks, [id]: { ...tasks[id], deletedAt: new Date().toISOString() } } })
@@ -143,8 +193,7 @@ function App() {
         const taskListId = store.tasks[id].taskListId
         const taskList = store.taskLists[taskListId]
         return {
-          ...store,
-          tasks: nextTasks,
+          ...store, tasks: nextTasks,
           taskLists: {
             ...store.taskLists,
             [taskListId]: {
@@ -164,14 +213,29 @@ function App() {
       <hr />
 
       <main>
+        {nonDeletedSortedTaskListIds.map(taskListId =>
+          <button
+            key={taskListId}
+            onClick={() => setSelectedTaskListIId(taskListId)}
+            className={taskListId === selectedTaskListId ? "font-bold" : ""}
+          >
+            {taskLists[taskListId].title}
+          </button>
+        )}
+
+        <button onClick={createTaskList}>
+          +
+        </button>
+
         <TaskListView {...{
-          taskList: defaultTaskList,
+          taskList: selectedTaskList,
           inDragMode,
           tasks,
           dragTaskId,
           dropTarget,
           setDropTarget,
           updateTaskList,
+          deleteTaskList,
           createTask,
           updateTask,
           deleteTask,

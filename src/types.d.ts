@@ -13,6 +13,9 @@ export type Task = {
 export type TaskList = {
   id: string,
   title: string,
+  createdAt?: string,
+  updatedAt?: string,
+  deletedAt?: string,
   sortedTaskIds: Task['id'][],
   newTaskTitle: string
 }
