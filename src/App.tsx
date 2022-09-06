@@ -73,6 +73,7 @@ function App() {
       taskLists: { ...taskLists, [taskList.id]: taskList },
       sortedTaskListIds: [...sortedTaskListIds, taskList.id]
     })
+    setSelectedTaskListIId(taskList.id)
   }
 
   function updateTaskList(id: TaskList['id'], taskList: Partial<TaskList> | React.SetStateAction<TaskList>) {
@@ -89,7 +90,10 @@ function App() {
 
   function deleteTaskList(id: TaskList['id']) {
     const newTaskList = newTaskListTemplate({ title: "Tasks" })
-    const addTask = sortedTaskListIds.length === 1
+    const addTask = nonDeletedSortedTaskListIds.length === 1
+    if (selectedTaskListId === id) {
+      setSelectedTaskListIId(addTask ? newTaskList.id : nonDeletedSortedTaskListIds.filter(prevId => prevId !== id)[0])
+    }
     updateStore({
       ...store,
       taskLists: {
