@@ -32,7 +32,7 @@ export const TaskListView = ({
   setDragTaskId: React.Dispatch<React.SetStateAction<string | undefined>>,
   drop: (endIndex: number) => void,
 }) => {
-  const { sortedTaskIds, newTaskTitle } = taskList
+  const { tasksSortIndex, newTaskTitle } = taskList
   const [editMode, setEditMode] = useState(false)
   const [tempTitle, setTempTitle] = useState(taskList.title)
 
@@ -66,7 +66,7 @@ export const TaskListView = ({
         }}>
           <h2>Edit Task List</h2>
           <input
-            type="text box-bordr"
+            type="text"
             className='box-border w-full text-xl py-1 px-2'
             value={tempTitle}
             onChange={e => setTempTitle(e.target.value)}
@@ -91,12 +91,12 @@ export const TaskListView = ({
         </form>
       </ModalDialog>
       <ul className="list-none px-0 py-4">
-        {sortedTaskIds.map((id, index) => (
+        {tasksSortIndex.map((id, index) => (
           <Fragment key={id}>
             {dragTaskId && typeof tasks[dragTaskId].deletedAt !== 'string' &&
               <ReorderTasksDropZone
                 index={index}
-                hidden={id === dragTaskId || (index > 0 && sortedTaskIds[index - 1] === dragTaskId)}
+                hidden={id === dragTaskId || (index > 0 && tasksSortIndex[index - 1] === dragTaskId)}
                 isDropTarget={dropTarget === index}
                 setDropTarget={setDropTarget}
                 drop={drop}
@@ -117,9 +117,9 @@ export const TaskListView = ({
 
         {dragTaskId &&
           <ReorderTasksDropZone
-            index={sortedTaskIds.length}
-            hidden={sortedTaskIds.at(-1) === dragTaskId}
-            isDropTarget={dropTarget === sortedTaskIds.length}
+            index={tasksSortIndex.length}
+            hidden={tasksSortIndex.at(-1) === dragTaskId}
+            isDropTarget={dropTarget === tasksSortIndex.length}
             setDropTarget={setDropTarget}
             drop={drop}
           >

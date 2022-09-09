@@ -23,7 +23,7 @@ function newTaskListTemplate(taskList: Partial<TaskList> = {}): TaskList {
   return {
     id: uniqueId(),
     title: "New List",
-    sortedTaskIds: [],
+    tasksSortIndex: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     newTaskTitle: "",
@@ -38,16 +38,16 @@ function App() {
       "1": {
         id: "1",
         title: "Tasks",
-        sortedTaskIds: [],
+        tasksSortIndex: [],
         newTaskTitle: "",
       }
     },
-    sortedTaskListIds: ["1"],
+    taskListsSortIndex: ["1"],
     newTaskListTitle: ""
   })
 
   // tasks
-  const { tasks, taskLists, sortedTaskListIds } = store
+  const { tasks, taskLists, taskListsSortIndex } = store
 
 
   // drag 'n drop
@@ -57,13 +57,13 @@ function App() {
 
 
   // task lists
-  const nonDeletedSortedTaskListIds = sortedTaskListIds.filter(id => !taskLists[id].deletedAt)
-  const [selectedTaskListId, setSelectedTaskListIId] = useState(nonDeletedSortedTaskListIds[0])
+  const nonDeletedtaskListsSortIndex = taskListsSortIndex.filter(id => !taskLists[id].deletedAt)
+  const [selectedTaskListId, setSelectedTaskListIId] = useState(nonDeletedtaskListsSortIndex[0])
   if (!selectedTaskListId) {
     return null
   }
   const selectedTaskList = taskLists[selectedTaskListId]
-  const { sortedTaskIds } = selectedTaskList
+  const { tasksSortIndex } = selectedTaskList
 
 
   function createTaskList() {
@@ -71,7 +71,7 @@ function App() {
     updateStore({
       ...store,
       taskLists: { ...taskLists, [taskList.id]: taskList },
-      sortedTaskListIds: [...sortedTaskListIds, taskList.id]
+      taskListsSortIndex: [...taskListsSortIndex, taskList.id]
     })
     setSelectedTaskListIId(taskList.id)
   }
@@ -90,9 +90,9 @@ function App() {
 
   function deleteTaskList(id: TaskList['id']) {
     const newTaskList = newTaskListTemplate({ title: "Tasks" })
-    const addTask = nonDeletedSortedTaskListIds.length === 1
+    const addTask = nonDeletedtaskListsSortIndex.length === 1
     if (selectedTaskListId === id) {
-      setSelectedTaskListIId(addTask ? newTaskList.id : nonDeletedSortedTaskListIds.filter(prevId => prevId !== id)[0])
+      setSelectedTaskListIId(addTask ? newTaskList.id : nonDeletedtaskListsSortIndex.filter(prevId => prevId !== id)[0])
     }
     updateStore({
       ...store,
@@ -101,15 +101,15 @@ function App() {
         [id]: { ...taskLists[id], deletedAt: new Date().toISOString() },
         ...(addTask ? { [newTaskList.id]: newTaskList } : {})
       },
-      sortedTaskListIds: [...sortedTaskListIds, ...(addTask ? [newTaskList.id] : [])]
+      taskListsSortIndex: [...taskListsSortIndex, ...(addTask ? [newTaskList.id] : [])]
     })
     setTimeout(() => {
       updateStore((store) => {
         const nextTaskLists = { ...store.taskLists }
         delete nextTaskLists[id]
-        const nextSortedTaskListids = store.sortedTaskListIds.filter(taskListId => taskListId !== id)
+        const nexttaskListsSortIndex = store.taskListsSortIndex.filter(taskListId => taskListId !== id)
 
-        return { ...store, taskLists: nextTaskLists, sortedTaskListIds: nextSortedTaskListids }
+        return { ...store, taskLists: nextTaskLists, taskListsSortIndex: nexttaskListsSortIndex }
       })
     }, 1500);
   }
@@ -118,21 +118,21 @@ function App() {
     if (typeof dragTaskId !== "undefined") {
       let nextSortKey
       if (endIndex === 0) {
-        nextSortKey = tasks[sortedTaskIds[endIndex]].sortKey - 1
-      } else if (endIndex === sortedTaskIds.length) {
-        nextSortKey = tasks[sortedTaskIds[endIndex - 1]].sortKey + 1
+        nextSortKey = tasks[tasksSortIndex[endIndex]].sortKey - 1
+      } else if (endIndex === tasksSortIndex.length) {
+        nextSortKey = tasks[tasksSortIndex[endIndex - 1]].sortKey + 1
       } else {
-        nextSortKey = (tasks[sortedTaskIds[endIndex]].sortKey + tasks[sortedTaskIds[endIndex - 1]].sortKey) / 2
+        nextSortKey = (tasks[tasksSortIndex[endIndex]].sortKey + tasks[tasksSortIndex[endIndex - 1]].sortKey) / 2
       }
 
-      const startIndex = sortedTaskIds.indexOf(dragTaskId)
-      const nextSortedTaskIds = [...sortedTaskIds]
+      const startIndex = tasksSortIndex.indexOf(dragTaskId)
+      const nexttasksSortIndex = [...tasksSortIndex]
       if (endIndex < startIndex) {
-        nextSortedTaskIds.splice(startIndex, 1)
-        nextSortedTaskIds.splice(endIndex, 0, dragTaskId)
+        nexttasksSortIndex.splice(startIndex, 1)
+        nexttasksSortIndex.splice(endIndex, 0, dragTaskId)
       } else {
-        nextSortedTaskIds.splice(endIndex, 0, dragTaskId)
-        nextSortedTaskIds.splice(startIndex, 1)
+        nexttasksSortIndex.splice(endIndex, 0, dragTaskId)
+        nexttasksSortIndex.splice(startIndex, 1)
       }
 
       updateStore({
@@ -148,7 +148,7 @@ function App() {
           ...taskLists,
           [selectedTaskList.id]: {
             ...selectedTaskList,
-            sortedTaskIds: nextSortedTaskIds
+            tasksSortIndex: nexttasksSortIndex
           }
         }
       })
@@ -166,7 +166,7 @@ function App() {
         ...taskLists,
         [taskListId]: {
           ...taskLists[taskListId],
-          sortedTaskIds: [...taskLists[taskListId].sortedTaskIds, newTask.id],
+          tasksSortIndex: [...taskLists[taskListId].tasksSortIndex, newTask.id],
           newTaskTitle: ""
         }
       }
@@ -202,7 +202,7 @@ function App() {
             ...store.taskLists,
             [taskListId]: {
               ...taskList,
-              sortedTaskIds: taskList.sortedTaskIds.filter(taskId => taskId !== id)
+              tasksSortIndex: taskList.tasksSortIndex.filter(taskId => taskId !== id)
             }
           }
         }
@@ -217,7 +217,7 @@ function App() {
       <hr />
 
       <main>
-        {nonDeletedSortedTaskListIds.map(taskListId =>
+        {nonDeletedtaskListsSortIndex.map(taskListId =>
           <button
             key={taskListId}
             onClick={() => setSelectedTaskListIId(taskListId)}
@@ -231,7 +231,7 @@ function App() {
           +
         </button>
 
-        <TaskListView {...{
+        <TaskListView key={selectedTaskList.id} {...{
           taskList: selectedTaskList,
           inDragMode,
           tasks,

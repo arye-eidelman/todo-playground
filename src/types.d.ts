@@ -16,13 +16,13 @@ export type TaskList = {
   createdAt?: string,
   updatedAt?: string,
   deletedAt?: string,
-  sortedTaskIds: Task['id'][],
+  tasksSortIndex: Task['id'][],
   newTaskTitle: string
 }
 
 export type Store = {
   tasks: Record<Task['id'], Task>,
   taskLists: Record<TaskList['id'], TaskList>,
-  sortedTaskListIds: TaskList['id'][]
+  taskListsSortIndex: TaskList['id'][]
   newTaskListTitle: string
 }
