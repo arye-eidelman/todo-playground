@@ -76,7 +76,7 @@ export const TaskListView = ({
             <button
               type="button"
               className='bg-transparent border-0 text-2xl w-10 h-10 flex justify-center items-center'
-              title={`Edit task-list '${taskList.title}'`}
+              title="Cancel"
               onClick={e => {
                 e.preventDefault()
                 setTempTitle(taskList.title)

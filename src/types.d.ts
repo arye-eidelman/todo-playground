@@ -24,5 +24,4 @@ export type Store = {
   tasks: Record<Task['id'], Task>,
   taskLists: Record<TaskList['id'], TaskList>,
   taskListsSortIndex: TaskList['id'][]
-  newTaskListTitle: string
 }

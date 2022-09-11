@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLocalStore } from './hooks'
+import { ModalDialog } from './ModalDialog'
 import { TaskListView } from './TaskListView'
 import { Task, TaskList, Store } from './types'
 
@@ -55,6 +56,9 @@ function App() {
   const [dropTarget, setDropTarget] = useState<number>()
   const inDragMode = typeof dragTaskId !== "undefined"
 
+  // new task list
+  const [showNewTaskDialog, setShowNewTaskDialog] = useState(false)
+  const [tempTitle, setTempTitle] = useState("")
 
   // task lists
   const nonDeletedtaskListsSortIndex = taskListsSortIndex.filter(id => !taskLists[id].deletedAt)
@@ -66,8 +70,9 @@ function App() {
   const { tasksSortIndex } = selectedTaskList
 
 
-  function createTaskList() {
-    const taskList = newTaskListTemplate()
+
+  function createTaskList(partialTaskList?: Partial<TaskList>) {
+    const taskList = newTaskListTemplate(partialTaskList)
     updateStore({
       ...store,
       taskLists: { ...taskLists, [taskList.id]: taskList },
@@ -227,9 +232,47 @@ function App() {
           </button>
         )}
 
-        <button onClick={createTaskList}>
+        <button onClick={() => setShowNewTaskDialog(true)}>
           +
         </button>
+
+        {<ModalDialog open={showNewTaskDialog}
+          className='w-full max-w-md backdrop:bg-neutral-500/50'
+          onClose={() => setShowNewTaskDialog(false)}
+        >
+          <form onSubmit={e => {
+            e.preventDefault()
+            createTaskList({title: tempTitle})
+            setTempTitle("")
+            setShowNewTaskDialog(false)
+          }}>
+            <h2>Create Task List</h2>
+            <input
+              type="text"
+              className='box-border w-full text-xl py-1 px-2'
+              value={tempTitle}
+              onChange={e => setTempTitle(e.target.value)}
+              autoFocus
+            />
+            <div className='flex justify-end mt-4 gap-2'>
+              <button
+                type="button"
+                className='bg-transparent border-0 text-2xl w-10 h-10 flex justify-center items-center'
+                title="Cancel"
+                onClick={e => {
+                  e.preventDefault()
+                  setTempTitle("")
+                  setShowNewTaskDialog(false)
+                }}>
+                <span>✖</span>
+              </button>
+              <button type="submit" className='bg-transparent border-0 text-2xl w-10 h-10 flex justify-center items-center'>
+                <span>✔</span>
+              </button>
+            </div>
+          </form>
+        </ModalDialog>
+        }
 
         <TaskListView key={selectedTaskList.id} {...{
           taskList: selectedTaskList,
