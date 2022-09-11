@@ -10,7 +10,7 @@ export const useIsMount = () => {
 }
 
 // a useState wrapper that syncs with local storage
-export const useLocalStore = function <T>(initialState: T | (() => T), storeKey = "todo-playground") {
+export const useLocalStore = function <T>(initialState: T | (() => T), storeKey = "todo-playground", schemaVersion = 0) {
   const [data, setData] = useState<T>(initialState)
   const isMount = useIsMount()
 
@@ -25,12 +25,16 @@ export const useLocalStore = function <T>(initialState: T | (() => T), storeKey 
   function loadFromLocalStorage() {
     const storedData = window.localStorage.getItem(storeKey)
     if (typeof storedData === 'string') {
-      setData(JSON.parse(storedData))
+      const json = JSON.parse(storedData)
+      if (json.schemaVersion === schemaVersion) {
+        setData(JSON.parse(storedData))
+      }
+      // else check for older schema versions and migrate?
     }
   }
 
   // when mounting
-  useEffect(loadFromLocalStorage, [storeKey])
+  useEffect(loadFromLocalStorage, [storeKey, schemaVersion])
 
   // and in response to changes from other tabs
   useEffect(() => {

@@ -21,7 +21,7 @@ export type TaskList = {
 }
 
 export type Store = {
-  version: `${number}.${number}.${number}`
+  schemaVersion: number
   tasks: Record<Task['id'], Task>,
   taskLists: Record<TaskList['id'], TaskList>,
   taskListsSortIndex: TaskList['id'][]
