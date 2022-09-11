@@ -3,7 +3,7 @@ import { TaskView } from './TaskView'
 import { Task, TaskList, Store } from './types'
 import { ReorderTasksDropZone } from './ReorderTasksDropZone'
 import { TaskPreview } from './TaskPreview'
-import { ModalDialog } from './ModalDialog'
+import { TaskListEditDialog } from './TaskListEditDialog'
 
 export const TaskListView = ({
   taskList,
@@ -34,7 +34,6 @@ export const TaskListView = ({
 }) => {
   const { tasksSortIndex, newTaskTitle } = taskList
   const [editMode, setEditMode] = useState(false)
-  const [tempTitle, setTempTitle] = useState(taskList.title)
 
   return (
     <div className='mx-auto max-w-md'>
@@ -55,41 +54,17 @@ export const TaskListView = ({
           </button>
         </div>
       </div>
-      <ModalDialog open={editMode}
-        className='w-full max-w-md backdrop:bg-neutral-500/50'
-        onClose={() => setEditMode(false)}
-      >
-        <form onSubmit={e => {
-          e.preventDefault()
-          updateTaskList(taskList.id, { title: tempTitle })
-          setEditMode(false)
-        }}>
-          <h2>Edit Task List</h2>
-          <input
-            type="text"
-            className='box-border w-full text-xl py-1 px-2'
-            value={tempTitle}
-            onChange={e => setTempTitle(e.target.value)}
-            autoFocus
-          />
-          <div className='flex justify-end mt-4 gap-2'>
-            <button
-              type="button"
-              className='bg-transparent border-0 text-2xl w-10 h-10 flex justify-center items-center'
-              title="Cancel"
-              onClick={e => {
-                e.preventDefault()
-                setTempTitle(taskList.title)
-                setEditMode(false)
-              }}>
-              <span>✖</span>
-            </button>
-            <button type="submit" className='bg-transparent border-0 text-2xl w-10 h-10 flex justify-center items-center'>
-              <span>✔</span>
-            </button>
-          </div>
-        </form>
-      </ModalDialog>
+      {editMode &&
+        <TaskListEditDialog
+          isNew={false}
+          initialState={taskList}
+          onSubmit={(updatedState) => {
+            updateTaskList(taskList.id, updatedState)
+            setEditMode(false)
+          }}
+          onCancel={() => setEditMode(false)}
+        />
+      }
       <ul className="list-none px-0 py-4">
         {tasksSortIndex.map((id, index) => (
           <Fragment key={id}>

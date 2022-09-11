@@ -1,9 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 
-interface dialogProps extends React.DetailedHTMLProps<React.DialogHTMLAttributes<HTMLDialogElement>, HTMLDialogElement> {
-  showModel?: boolean
-}
-export const ModalDialog = ({ open, ...dialogProps }: dialogProps) => {
+export const ModalDialog = ({ open = true, ...dialogProps }: React.DetailedHTMLProps<React.DialogHTMLAttributes<HTMLDialogElement>, HTMLDialogElement>) => {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (ref.current && open !== ref.current.open) {
