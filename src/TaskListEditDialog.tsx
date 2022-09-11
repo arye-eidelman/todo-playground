@@ -25,7 +25,7 @@ export const TaskListEditDialog = ({
         e.preventDefault()
         onSubmit({ title })
       }}>
-        <h2>{isNew ? "Create" : "Edit"} Task List</h2>
+        <h2>{isNew ? "Create new" : "Edit"} task list</h2>
         <input
           type="text"
           className='box-border w-full text-xl py-1 px-2'
@@ -46,7 +46,7 @@ export const TaskListEditDialog = ({
           </button>
           <button
             type="submit"
-            title={isNew ? "Create Task List" : "Save Changes"}
+            title={isNew ? "Create New Task List" : "Save Changes"}
             className='bg-transparent border-0 text-2xl w-10 h-10 flex justify-center items-center'
             disabled={!title.length}
           >

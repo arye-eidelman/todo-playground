@@ -10,8 +10,8 @@ export const useIsMount = () => {
 }
 
 // a useState wrapper that syncs with local storage
-export const useLocalStore = function <T>(defaultValue: any = {}, storeKey = "todo-playground") {
-  const [data, setData] = useState<T>(defaultValue)
+export const useLocalStore = function <T>(initialState: T | (() => T), storeKey = "todo-playground") {
+  const [data, setData] = useState<T>(initialState)
   const isMount = useIsMount()
 
   // save state to localStorage

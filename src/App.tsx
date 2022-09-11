@@ -3,15 +3,12 @@ import { useLocalStore } from './hooks'
 import { TaskListView } from './TaskListView'
 import { TaskListEditDialog } from './TaskListEditDialog'
 import { Task, TaskList, Store } from './types'
-
-function uniqueId() {
-  return Date.now().toString()
-}
+import { v4 as uuidv4 } from 'uuid';
 
 function newTaskTemplate(taskListId: TaskList['id'], task: Partial<Task>): Task {
   return {
     taskListId,
-    id: uniqueId(),
+    id: uuidv4(),
     title: "",
     completed: false,
     createdAt: new Date().toISOString(),
@@ -22,7 +19,7 @@ function newTaskTemplate(taskListId: TaskList['id'], task: Partial<Task>): Task 
 }
 function newTaskListTemplate(taskList: Partial<TaskList> = {}): TaskList {
   return {
-    id: uniqueId(),
+    id: uuidv4(),
     title: "New List",
     tasksSortIndex: [],
     createdAt: new Date().toISOString(),
@@ -33,23 +30,30 @@ function newTaskListTemplate(taskList: Partial<TaskList> = {}): TaskList {
 }
 
 function App() {
-  const [store, updateStore] = useLocalStore<Store>({
-    tasks: {},
-    taskLists: {
-      "1": {
-        id: "1",
-        title: "Tasks",
-        tasksSortIndex: [],
-        newTaskTitle: "",
-      }
-    },
-    taskListsSortIndex: ["1"],
-    newTaskListTitle: ""
+  const [store, updateStore] = useLocalStore<Store>(() => {
+    const taskList = newTaskListTemplate({ title: "To Do Playground feature list" })
+    const tasks = [
+      newTaskTemplate(taskList.id, { completed: true, title: "Welcome 👋, Thanks for giving To Do Playground a try" }),
+      newTaskTemplate(taskList.id, { completed: true, title: "Support multple task lists" }),
+      newTaskTemplate(taskList.id, { completed: true, title: "Drag and drop to reorder tasks on desktop" }),
+      newTaskTemplate(taskList.id, { completed: false, title: "Drag and drop to reorder tasks on mobile" }),
+      newTaskTemplate(taskList.id, { completed: false, title: "Drag and drop to move tasks between lists" }),
+      newTaskTemplate(taskList.id, { completed: true, title: "Create this intro" }),
+      newTaskTemplate(taskList.id, { completed: true, title: "Animate the creation and deletion of tasks" }),
+      newTaskTemplate(taskList.id, { completed: false, title: "Design three pane layout for tasks lists menu, tasks list, and advanced task options" }),
+      newTaskTemplate(taskList.id, { completed: false, title: "Create right task context menu (right click/long-press/⋮)." }),
+    ]
+    taskList.tasksSortIndex = tasks.map(t => t.id)
+    return {
+      version: "0.1.0",
+      tasks: tasks.reduce<Store['tasks']>((tasks, task) => { tasks[task.id] = task; return tasks }, {}),
+      taskLists: { [taskList.id]: taskList },
+      taskListsSortIndex: [taskList.id]
+    }
   })
 
   // tasks
   const { tasks, taskLists, taskListsSortIndex } = store
-
 
   // drag 'n drop
   const [dragTaskId, setDragTaskId] = useState<Task['id']>()
@@ -60,7 +64,6 @@ function App() {
   const [showNewTaskDialog, setShowNewTaskDialog] = useState(false)
 
   // task list
-  // console.log(taskListsSortIndex)
   const nonDeletedtaskListsSortIndex = taskListsSortIndex.filter(id => !taskLists[id].deletedAt)
   const [selectedTaskListId, setSelectedTaskListIId] = useState(nonDeletedtaskListsSortIndex[0])
   if (!selectedTaskListId || !taskListsSortIndex.includes(selectedTaskListId)) {

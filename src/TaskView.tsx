@@ -41,6 +41,7 @@ export const TaskView = ({
       <div className='py-2 space-x-2 flex items-center text-lg'>
         <input
           type="checkbox"
+          className='w-6 h-6'
           title={`Mark ${task.completed ? 'un' : ''}completed task '${shortTitle(task.title)}'`}
           checked={task.completed}
           onChange={e => updateTask(id, { completed: e.target.checked })}

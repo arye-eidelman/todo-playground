@@ -38,7 +38,7 @@ export const TaskListView = ({
   return (
     <div className='mx-auto max-w-md'>
       <div className='flex justify-between'>
-        <h3>{taskList.title}</h3>
+        <h1 className='mb-0 text-xl'>{taskList.title}</h1>
         <div>
           <button
             className='bg-transparent border-0 text-lg'
