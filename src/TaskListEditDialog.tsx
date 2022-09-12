@@ -36,7 +36,7 @@ export const TaskListEditDialog = ({
         <div className='flex justify-end mt-4 gap-2' >
           <button
             type="button"
-            className='bg-transparent border-0 text-2xl w-10 h-10 flex justify-center items-center'
+            className='subtle-button text-2xl w-10 h-10'
             title="Cancel"
             onClick={e => {
               e.preventDefault()
@@ -47,7 +47,7 @@ export const TaskListEditDialog = ({
           <button
             type="submit"
             title={isNew ? "Create New Task List" : "Save Changes"}
-            className='bg-transparent border-0 text-2xl w-10 h-10 flex justify-center items-center'
+            className='subtle-button text-2xl w-10 h-10'
             disabled={!title.length}
           >
             <span>✔</span>

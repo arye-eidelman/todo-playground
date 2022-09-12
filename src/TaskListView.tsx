@@ -41,14 +41,14 @@ export const TaskListView = ({
         <h1 className='mb-0 text-xl'>{taskList.title}</h1>
         <div>
           <button
-            className='bg-transparent border-0 text-lg'
+            className='subtle-button'
             title={`Edit task-list '${taskList.title}'`}
             onClick={() => setEditMode(!editMode)}>
             ✎
           </button>
           <button
-            className='bg-transparent border-0 text-lg'
-            title={`Edit task-list '${taskList.title}'`}
+            className='subtle-button'
+            title={`Delete task-list '${taskList.title}'`}
             onClick={() => deleteTaskList(taskList.id)}>
             🗑
           </button>
@@ -65,7 +65,7 @@ export const TaskListView = ({
           onCancel={() => setEditMode(false)}
         />
       }
-      <ul className="list-none px-0 py-4">
+      <ul className="list-none px-0 pb-4">
         {tasksSortIndex.map((id, index) => (
           <Fragment key={id}>
             {dragTaskId && typeof tasks[dragTaskId].deletedAt !== 'string' &&
@@ -102,10 +102,10 @@ export const TaskListView = ({
           </ReorderTasksDropZone>
         }
 
-        <li key="new-item" className='my-3 space-x-2 flex items-baseline text-lg sticky bottom-2'>
+        <li key="new-item" className='p-2 space-x-2 flex items-baseline text-lg sticky bottom-0 bg-white'>
           <input
             type="text"
-            className='w-full text-lg py-1 px-2'
+            className='w-full text-lg py-1 px-2 box-border '
             title="New task-item title"
             placeholder='Enter task here and hit enter'
             value={taskList.newTaskTitle}
