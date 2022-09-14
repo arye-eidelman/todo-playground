@@ -80,7 +80,6 @@ export const TaskListView = ({
               </ReorderTasksDropZone>
             }
             <TaskView
-              id={id}
               task={tasks[id]}
               updateTask={updateTask}
               deleteTask={deleteTask}

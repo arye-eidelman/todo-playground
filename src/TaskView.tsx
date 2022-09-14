@@ -10,20 +10,19 @@ function shortTitle(title: string) {
 }
 
 export const TaskView = ({
-  id,
   task,
   updateTask,
   deleteTask,
   dragTaskId,
   setDragTaskId
 }: {
-  id: Task['id'],
   task: Task,
   updateTask: (id: Task['id'], task: Partial<Task>) => void,
   deleteTask: (id: Task['id']) => void,
   dragTaskId: Task['id'] | undefined,
   setDragTaskId: (id?: Task['id']) => void
 }) => {
+  const id = task.id
   const [collapsed, setCollapsed] = useState(true)
 
   useEffect(() => {

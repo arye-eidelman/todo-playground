@@ -3,53 +3,8 @@ import { useLocalStore } from './hooks'
 import { TaskListView } from './TaskListView'
 import { TaskListEditDialog } from './TaskListEditDialog'
 import { Task, TaskList, Store } from './types'
-import { v4 as uuidv4 } from 'uuid';
-
-function newTaskTemplate(taskListId: TaskList['id'], task: Partial<Task>): Task {
-  return {
-    taskListId,
-    id: uuidv4(),
-    title: "",
-    completed: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    sortKey: Date.now(),
-    ...task
-  }
-}
-function newTaskListTemplate(taskList: Partial<TaskList> = {}): TaskList {
-  return {
-    id: uuidv4(),
-    title: "New List",
-    tasksSortIndex: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    newTaskTitle: "",
-    ...taskList
-  }
-}
-
-function initialStore(): Store {
-  const taskList = newTaskListTemplate({ title: "To Do Playground feature list" })
-  const tasks = [
-    newTaskTemplate(taskList.id, { completed: true, title: "Welcome 👋, Thanks for giving To Do Playground a try" }),
-    newTaskTemplate(taskList.id, { completed: true, title: "Support multple task lists" }),
-    newTaskTemplate(taskList.id, { completed: true, title: "Drag and drop to reorder tasks on desktop" }),
-    newTaskTemplate(taskList.id, { completed: false, title: "Drag and drop to reorder tasks on mobile" }),
-    newTaskTemplate(taskList.id, { completed: false, title: "Drag and drop to move tasks between lists" }),
-    newTaskTemplate(taskList.id, { completed: true, title: "Create this intro" }),
-    newTaskTemplate(taskList.id, { completed: true, title: "Animate the creation and deletion of tasks" }),
-    newTaskTemplate(taskList.id, { completed: false, title: "Design three pane layout for tasks lists menu, tasks list, and advanced task options" }),
-    newTaskTemplate(taskList.id, { completed: false, title: "Create right task context menu (right click/long-press/⋮)." }),
-  ]
-  taskList.tasksSortIndex = tasks.map(t => t.id)
-  return {
-    schemaVersion: 0,
-    tasks: tasks.reduce<Store['tasks']>((tasks, task) => { tasks[task.id] = task; return tasks }, {}),
-    taskLists: { [taskList.id]: taskList },
-    taskListsSortIndex: [taskList.id]
-  }
-}
+import { newTaskTemplate, newTaskListTemplate, initialStore } from './utils'
+import { styles } from './styles'
 
 function App() {
   const [store, updateStore] = useLocalStore<Store>(initialStore)
@@ -221,54 +176,82 @@ function App() {
     }, 1500);
   }
   return (
-    <div className="mx-auto max-w-xl">
+    <div>
       <header>
         <h1>ToDo Playground</h1>
       </header>
       <hr />
 
-      <main>
-        {nonDeletedtaskListsSortIndex.map(taskListId =>
-          <button
-            key={taskListId}
-            onClick={() => setSelectedTaskListIId(taskListId)}
-            className={taskListId === selectedTaskListId ? "font-bold" : ""}
-          >
-            {taskLists[taskListId].title}
+      <main className='md:flex md:flex-row md:justify-items-stretch '>
+        <nav className='flex gap-1 md:flex-col md:w-64 p-2 flex-wrap'>
+          {nonDeletedtaskListsSortIndex.map(taskListId =>
+            <button
+              key={taskListId}
+              onClick={() => setSelectedTaskListIId(taskListId)}
+              className={`
+                text-left px-3 py-2 border-0 rounded-sm
+                border-b-2 md:border-b-0 md:border-l-2 border-solid border-opacity-100
+                transition-colors duration-100
+                ${taskListId === selectedTaskListId ? `
+                  ${styles.bg[taskLists[taskListId].themeColor]['100']}
+                  ${styles.border[taskLists[taskListId].themeColor]['500']}
+                  ${styles.text[taskLists[taskListId].themeColor]['900']}
+                ` : `
+                  bg-gray-100
+                  ${styles.border[taskLists[taskListId].themeColor]['300']}
+                  ${styles.text[taskLists[taskListId].themeColor]['800']}
+                `}
+              `}
+            >
+              {taskLists[taskListId].title}
+            </button>
+          )}
+
+          <button onClick={() => setShowNewTaskDialog(true)} className={`
+            text-left px-3 py-2 border-0 rounded-sm
+            border-b-2 md:border-b-0 md:border-l-2 border-solid border-opacity-100
+            font-bold
+            text-grey-800
+            border-grey-800
+          `}>
+            +
           </button>
-        )}
+        </nav>
 
-        <button onClick={() => setShowNewTaskDialog(true)}>
-          +
-        </button>
+        {/* task-list-area */}
+        <div className={`p-2 md:grow`}>
 
-        {showNewTaskDialog &&
-          <TaskListEditDialog
-            isNew
-            onSubmit={(updatedState) => {
-              createTaskList(updatedState)
-              setShowNewTaskDialog(false)
-            }}
-            onCancel={() => setShowNewTaskDialog(false)}
-          />
-        }
+          {showNewTaskDialog &&
+            <TaskListEditDialog
+              isNew
+              onSubmit={(updatedState) => {
+                createTaskList(updatedState)
+                setShowNewTaskDialog(false)
+              }}
+              onCancel={() => setShowNewTaskDialog(false)}
+            />
+          }
 
-        <TaskListView key={selectedTaskList.id} {...{
-          taskList: selectedTaskList,
-          inDragMode,
-          tasks,
-          dragTaskId,
-          dropTarget,
-          setDropTarget,
-          updateTaskList,
-          deleteTaskList,
-          createTask,
-          updateTask,
-          deleteTask,
-          setDragTaskId,
-          drop,
-        }}
-        />
+          <TaskListView key={selectedTaskList.id} {...{
+            taskList: selectedTaskList,
+            inDragMode,
+            tasks,
+            dragTaskId,
+            dropTarget,
+            setDropTarget,
+            updateTaskList,
+            deleteTaskList,
+            createTask,
+            updateTask,
+            deleteTask,
+            setDragTaskId,
+            drop,
+          }} />
+        </div>
+        {/* task-area */}
+        <div className='md:w-64'>
+
+        </div>
       </main>
 
       <footer>
