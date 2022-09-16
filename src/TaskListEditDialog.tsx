@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ModalDialog } from './ModalDialog'
-import { colors, styles } from './styles'
+import { colors, themedStyle } from './utils'
 import { TaskList } from './types'
 
 const capitalize = (string: string) => string.length ? string[0].toUpperCase() + string.slice(1) : ""
@@ -55,9 +55,10 @@ export const TaskListEditDialog = ({
                 key={color}
                 title={capitalize(color)}
                 className={`inline-block m-1 h-10 w-10 rounded-full border-4 border-solid
-                  ${styles.bg[color]['200']}
-                  ${styles.text[color]['900']}
-                  ${selected ? ` ${styles.border[color]['500']}` : ' border-white border-opacity-0'}
+                  ${themedStyle('bg', color, '200')}
+                  ${themedStyle('text', color, '900')}
+                  ${themedStyle('border', color, '500')}
+                  ${selected ? '' : 'border-opacity-0'}
                 `}
               >
                 <input type="radio" className='hidden' name="color" value={color} checked={selected} onChange={themeColorChangeHandeler} />

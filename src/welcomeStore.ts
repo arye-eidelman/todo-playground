@@ -1,33 +1,8 @@
-import { Task, TaskList, Store } from './types'
-import { colors } from './styles'
-import { v4 as uuidv4 } from 'uuid';
+import { newTaskListTemplate } from './utils/newTaskListTemplate'
+import { newTaskTemplate } from './utils/newTaskTemplate'
+import { Store } from './types'
 
-export function newTaskTemplate(taskListId: TaskList['id'], task: Partial<Task>): Task {
-  return {
-    taskListId,
-    id: uuidv4(),
-    title: "",
-    completed: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    sortKey: Date.now(),
-    ...task
-  }
-}
-export function newTaskListTemplate(taskList: Partial<TaskList> = {}): TaskList {
-  return {
-    id: uuidv4(),
-    title: "New List",
-    themeColor: colors[Math.floor(Math.random() * colors.length)],
-    tasksSortIndex: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    newTaskTitle: "",
-    ...taskList
-  }
-}
-
-export function initialStore(): Store {
+export function welcomeStore(): Store {
   const taskList = newTaskListTemplate({ title: "To Do Playground feature list" })
   const tasks = [
     newTaskTemplate(taskList.id, { completed: true, title: "Welcome 👋, Thanks for giving To Do Playground a try" }),

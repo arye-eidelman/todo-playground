@@ -3,11 +3,11 @@ import { useLocalStore } from './hooks'
 import { TaskListView } from './TaskListView'
 import { TaskListEditDialog } from './TaskListEditDialog'
 import { Task, TaskList, Store } from './types'
-import { newTaskTemplate, newTaskListTemplate, initialStore } from './utils'
-import { styles } from './styles'
+import { newTaskTemplate, newTaskListTemplate, themedStyle, randomNewColor } from './utils'
+import { welcomeStore } from './welcomeStore'
 
 function App() {
-  const [store, updateStore] = useLocalStore<Store>(initialStore)
+  const [store, updateStore] = useLocalStore<Store>(welcomeStore)
 
   // tasks
   const { tasks, taskLists, taskListsSortIndex } = store
@@ -184,28 +184,28 @@ function App() {
 
       <main className='md:flex md:flex-row md:justify-items-stretch '>
         <nav className='flex gap-1 md:flex-col md:w-64 p-2 flex-wrap'>
-          {nonDeletedtaskListsSortIndex.map(taskListId =>
-            <button
-              key={taskListId}
-              onClick={() => setSelectedTaskListIId(taskListId)}
-              className={`
+          {nonDeletedtaskListsSortIndex.map(taskListId => {
+            const themeColor = taskLists[taskListId].themeColor
+            const selected = taskListId === selectedTaskListId
+            return (
+
+              <button
+                key={taskListId}
+                onClick={() => setSelectedTaskListIId(taskListId)}
+                className={`
                 text-left px-3 py-2 border-0 rounded-sm
                 border-b-2 md:border-b-0 md:border-l-2 border-solid border-opacity-100
                 transition-colors duration-100
-                ${taskListId === selectedTaskListId ? `
-                  ${styles.bg[taskLists[taskListId].themeColor]['100']}
-                  ${styles.border[taskLists[taskListId].themeColor]['500']}
-                  ${styles.text[taskLists[taskListId].themeColor]['900']}
-                ` : `
-                  bg-gray-100
-                  ${styles.border[taskLists[taskListId].themeColor]['300']}
-                  ${styles.text[taskLists[taskListId].themeColor]['800']}
-                `}
+                ${themedStyle('bg', selected ? themeColor : 'gray', '100')}
+                ${themedStyle('border', themeColor, selected ? '500' : '300')}
+                ${themedStyle('text', themeColor, selected ? '900' : '800')}
               `}
-            >
-              {taskLists[taskListId].title}
-            </button>
-          )}
+              >
+                {taskLists[taskListId].title}
+              </button>
+
+            )
+          })}
 
           <button onClick={() => setShowNewTaskDialog(true)} className={`
             text-left px-3 py-2 border-0 rounded-sm
@@ -224,6 +224,9 @@ function App() {
           {showNewTaskDialog &&
             <TaskListEditDialog
               isNew
+              initialState={{
+                themeColor: randomNewColor(Object.keys(taskLists).map(id => taskLists[id].themeColor)),
+              }}
               onSubmit={(updatedState) => {
                 createTaskList(updatedState)
                 setShowNewTaskDialog(false)
