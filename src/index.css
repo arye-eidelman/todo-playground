@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* tailwind base font */
+html {
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
 @layer components {
   .subtle-button {
     @apply bg-transparent border-0 text-lg rounded-full h-8 w-8 hover:bg-slate-100;

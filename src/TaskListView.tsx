@@ -36,7 +36,7 @@ export const TaskListView = ({
   const [editMode, setEditMode] = useState(false)
 
   return (
-    <div className='mx-auto max-w-md'>
+    <div className='p-2 max-w-md'>
       <div className='flex justify-between'>
         <h1 className='mb-0 text-xl'>{taskList.title}</h1>
         <div>

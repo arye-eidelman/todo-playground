@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { ModalDialog } from './ModalDialog'
-import { colors, themedStyle } from './utils'
+import { ColorWheel } from './ColorWheel'
 import { TaskList } from './types'
-
-const capitalize = (string: string) => string.length ? string[0].toUpperCase() + string.slice(1) : ""
 
 export const TaskListEditDialog = ({
   isNew,
@@ -18,15 +16,11 @@ export const TaskListEditDialog = ({
 }) => {
 
   const [title, setTitle] = useState(initialState.title ?? "")
-  const [themeColor, setThemeColor] = useState(initialState.themeColor ?? colors[Math.floor(Math.random() * colors.length)])
-
-  const themeColorChangeHandeler = (e: any) => {
-    setThemeColor(e.target.value)
-  }
+  const [themeColor, setThemeColor] = useState(initialState.themeColor)
 
   return (
     <ModalDialog
-      className='w-full max-w-md backdrop:bg-neutral-500/50'
+      className='w-full max-w-xl backdrop:bg-neutral-500/50 box-border'
       onClose={() => onCancel()}
     >
       <form onSubmit={e => {
@@ -44,27 +38,9 @@ export const TaskListEditDialog = ({
             autoFocus
           />
         </label>
-        <fieldset className='text-justify'>
-          <legend>Theme Color</legend>
-
-          {colors.map(color => {
-            const selected = themeColor === color
-            return (
-              <label
-                tabIndex={0}
-                key={color}
-                title={capitalize(color)}
-                className={`inline-block m-1 h-10 w-10 rounded-full border-4 border-solid
-                  ${themedStyle('bg', color, '200')}
-                  ${themedStyle('text', color, '900')}
-                  ${themedStyle('border', color, '500')}
-                  ${selected ? '' : 'border-opacity-0'}
-                `}
-              >
-                <input type="radio" className='hidden' name="color" value={color} checked={selected} onChange={themeColorChangeHandeler} />
-              </label>
-            )
-          })}
+        <fieldset className='m-0'>
+          <legend className=''>Theme Color</legend>
+          <ColorWheel className="mx-auto my-2 w-48 sm:w-64 md:w-96 transition-all" value={themeColor} onChange={(newColor) => setThemeColor(newColor)} />
         </fieldset>
         <div className='flex justify-end mt-4 gap-2' >
           <button
@@ -81,7 +57,7 @@ export const TaskListEditDialog = ({
             type="submit"
             title={isNew ? "Create New Task List" : "Save Changes"}
             className='subtle-button text-2xl w-10 h-10'
-            disabled={!title.length}
+            disabled={!title.length || !themeColor}
           >
             <span>✔</span>
           </button>

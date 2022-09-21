@@ -10,7 +10,7 @@ export type Task = {
   sortKey: number
 }
 
-export type ThemeColor = 'red' | 'orange' | 'amber' | 'yellow' | 'lime' | 'green' | 'emerald' | 'teal' | 'cyan' | 'sky' | 'blue' | 'indigo' | 'violet' | 'purple' | 'fuchsia' | 'pink' | 'rose'
+export { ThemeColor, Color, TextColor, Darkness, Selector } from './utils/themedStyle'
 
 export type TaskList = {
   id: string,

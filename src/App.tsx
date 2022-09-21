@@ -219,7 +219,7 @@ function App() {
         </nav>
 
         {/* task-list-area */}
-        <div className={`p-2 md:grow`}>
+        <div className={`p-2 md:grow self-start justify-start mr-auto`}>
 
           {showNewTaskDialog &&
             <TaskListEditDialog
@@ -252,9 +252,9 @@ function App() {
           }} />
         </div>
         {/* task-area */}
-        <div className='md:w-64'>
+        {/* <div className='md:w-64'>
 
-        </div>
+        </div> */}
       </main>
 
       <footer>

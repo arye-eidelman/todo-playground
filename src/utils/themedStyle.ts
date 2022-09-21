@@ -1,19 +1,20 @@
-import { ThemeColor } from "../types"
-
-export const colors: ThemeColor[] = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose']
-type Color = ThemeColor | 'white' | 'gray' | 'black'
-type Darkness = '50' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
-type Selector = 'bg' | 'text' | 'border'
+// import { ThemeColor } from "../types"
+export const colors = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'] as const
+export type ThemeColor = typeof colors[number]
+export type Color = ThemeColor | 'white' | 'gray' | 'black' | 'transparent'
+export type TextColor = ThemeColor | 'white' | 'gray' | 'black'
+export type Darkness = '50' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
+export type Selector = 'bg' | 'text' | 'border'
 
 export const themedStyle = (selector: Selector, color: Color = 'gray', darkness: Darkness) => {
-  if (color === 'white' || color === 'black') {
+  if (color === 'white' || color === 'black' || color === 'transparent') {
     return `${selector}-${color}`
   }
   return `${selector}-${color}-${darkness}`
 }
 
 
-// bg-white bg-black
+// bg-white bg-black bg-transparent
 // bg-gray-50 bg-gray-100 bg-gray-200 bg-gray-300 bg-gray-400 bg-gray-500 bg-gray-600 bg-gray-700 bg-gray-800 bg-gray-900},
 // bg-red-50 bg-red-100 bg-red-200 bg-red-300 bg-red-400 bg-red-500 bg-red-600 bg-red-700 bg-red-800 bg-red-900},
 // bg-orange-50 bg-orange-100 bg-orange-200 bg-orange-300 bg-orange-400 bg-orange-500 bg-orange-600 bg-orange-700 bg-orange-800 bg-orange-900},
@@ -53,7 +54,7 @@ export const themedStyle = (selector: Selector, color: Color = 'gray', darkness:
 // text-pink-50 text-pink-100 text-pink-200 text-pink-300 text-pink-400 text-pink-500 text-pink-600 text-pink-700 text-pink-800 text-pink-900},
 // text-rose-50 text-rose-100 text-rose-200 text-rose-300 text-rose-400 text-rose-500 text-rose-600 text-rose-700 text-rose-800 text-rose-900},
 
-// border-white border-black
+// border-white border-black border-transparent
 // border-gray-50 border-gray-100 border-gray-200 border-gray-300 border-gray-400 border-gray-500 border-gray-600 border-gray-700 border-gray-800 border-gray-900},
 // border-red-50 border-red-100 border-red-200 border-red-300 border-red-400 border-red-500 border-red-600 border-red-700 border-red-800 border-red-900},
 // border-orange-50 border-orange-100 border-orange-200 border-orange-300 border-orange-400 border-orange-500 border-orange-600 border-orange-700 border-orange-800 border-orange-900},
