@@ -10,7 +10,7 @@ export type Task = {
   sortKey: number
 }
 
-export { ThemeColor, Color, TextColor, Darkness, Selector } from './utils/themedStyle'
+export { ThemeColor, Color, TextColor, DarkLevel, Selector } from './utils/themedStyle'
 
 export type TaskList = {
   id: string,

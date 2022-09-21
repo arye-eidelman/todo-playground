@@ -34,7 +34,7 @@ export const TaskView = ({
       id={id}
       className={
         `overflow-hidden transition-[height,opacity] duration-[200ms] box-border rounded-lg
-        border-0 border-b border-solid border-gray-200 shadow mb-2
+        border-0 border-b border-solid border-gray-200 shadow mb-2 bg-white
         ${dragTaskId === id ? 'opacity-50' : 'opacity-100'}
         ${collapsed || task.deletedAt ? 'h-0' : 'h-12'}`
       }

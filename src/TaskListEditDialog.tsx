@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ModalDialog } from './ModalDialog'
 import { ColorWheel } from './ColorWheel'
 import { TaskList } from './types'
+import { themedStyle } from './utils'
 
 export const TaskListEditDialog = ({
   isNew,
@@ -38,8 +39,12 @@ export const TaskListEditDialog = ({
             autoFocus
           />
         </label>
-        <fieldset className='m-0'>
-          <legend className=''>Theme Color</legend>
+        <fieldset className={`
+          m-0 border-4 outline-none border-solid
+          ${themedStyle('bg', themeColor, '100')}
+          ${themedStyle('border', themeColor, '800')}
+        `}>
+          <legend className={themedStyle('text', themeColor, '800')}>Theme Color</legend>
           <ColorWheel className="mx-auto my-2 w-48 sm:w-64 md:w-96 transition-all" value={themeColor} onChange={(newColor) => setThemeColor(newColor)} />
         </fieldset>
         <div className='flex justify-end mt-4 gap-2' >

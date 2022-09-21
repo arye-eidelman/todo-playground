@@ -1,16 +1,17 @@
 // import { ThemeColor } from "../types"
 export const colors = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'] as const
+export const darkLevels = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900'] as const
 export type ThemeColor = typeof colors[number]
 export type Color = ThemeColor | 'white' | 'gray' | 'black' | 'transparent'
 export type TextColor = ThemeColor | 'white' | 'gray' | 'black'
-export type Darkness = '50' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
+export type DarkLevel = typeof darkLevels[number]
 export type Selector = 'bg' | 'text' | 'border'
 
-export const themedStyle = (selector: Selector, color: Color = 'gray', darkness: Darkness) => {
+export const themedStyle = (selector: Selector, color: Color = 'gray', darkLevel: DarkLevel) => {
   if (color === 'white' || color === 'black' || color === 'transparent') {
     return `${selector}-${color}`
   }
-  return `${selector}-${color}-${darkness}`
+  return `${selector}-${color}-${darkLevel}`
 }
 
 

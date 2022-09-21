@@ -3,8 +3,10 @@ import { useLocalStore } from './hooks'
 import { TaskListView } from './TaskListView'
 import { TaskListEditDialog } from './TaskListEditDialog'
 import { Task, TaskList, Store } from './types'
-import { newTaskTemplate, newTaskListTemplate, themedStyle, randomNewColor } from './utils'
+import { newTaskTemplate, newTaskListTemplate, themedStyle, randomNewColor, darkLevels } from './utils'
 import { welcomeStore } from './welcomeStore'
+import twColors from 'tailwindcss/colors'
+
 
 function App() {
   const [store, updateStore] = useLocalStore<Store>(welcomeStore)
@@ -175,12 +177,21 @@ function App() {
       })
     }, 1500);
   }
+
+  const themeColorCssVariables: React.CSSProperties = {}
+  for (const darkLevel of darkLevels) {
+    // @ts-ignore
+    themeColorCssVariables[`--theme-color-${darkLevel}`] = twColors[taskLists[selectedTaskListId]?.themeColor]?.[darkLevel]
+  }
+
   return (
-    <div>
-      <header>
-        <h1>ToDo Playground</h1>
+    <div
+      className={`min-h-screen bg-theme-50 transition-colors duration-500`}
+      style={themeColorCssVariables}
+    >
+      <header className='bg-white h-12 p-2 shadow'>
+        <h1 className='m-0 text-2xl p-2'>ToDo Playground</h1>
       </header>
-      <hr />
 
       <main className='md:flex md:flex-row md:justify-items-stretch '>
         <nav className='flex gap-1 md:flex-col md:w-64 p-2 flex-wrap'>
@@ -193,10 +204,11 @@ function App() {
                 key={taskListId}
                 onClick={() => setSelectedTaskListIId(taskListId)}
                 className={`
-                text-left px-3 py-2 border-0 rounded-sm
-                border-b-2 md:border-b-0 md:border-l-2 border-solid border-opacity-100
-                transition-colors duration-100
-                ${themedStyle('bg', selected ? themeColor : 'gray', '100')}
+                text-left px-3 py-2 border-0 rounded-sm shadow
+                border-solid border-opacity-100
+                ${selected ? "border-b-4 md:border-b-0 md:border-l-4" : "border-b-2 md:border-b-0 md:border-l-2"}
+                transition-all duration-100
+                ${themedStyle('bg', 'white', '100')}
                 ${themedStyle('border', themeColor, selected ? '500' : '300')}
                 ${themedStyle('text', themeColor, selected ? '900' : '800')}
               `}
@@ -208,11 +220,12 @@ function App() {
           })}
 
           <button onClick={() => setShowNewTaskDialog(true)} className={`
-            text-left px-3 py-2 border-0 rounded-sm
+            text-left px-3 py-2 border-0 rounded-sm shadow
             border-b-2 md:border-b-0 md:border-l-2 border-solid border-opacity-100
             font-bold
-            text-grey-800
-            border-grey-800
+            bg-white
+            border-gray-500
+            text-gray-800
           `}>
             +
           </button>

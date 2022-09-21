@@ -26,7 +26,7 @@ export const ColorWheel = ({
             style={{ "--start": sliceStart } as React.CSSProperties}
             className={`pie__segment inline-block rounded-full border-[12px] border-solid box-border
             
-              ${themedStyle('bg', color, '200')}
+              ${themedStyle('bg', color, '300')}
               ${themedStyle('text', color, '900')}
               ${themedStyle('border', selected ? color : 'transparent', '500')}
             `}
